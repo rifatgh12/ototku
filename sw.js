@@ -1,5 +1,5 @@
-/* OtotKu - Service Worker for Offline & PWA Support (v2 - Cloud DB Compatible) */
-const CACHE_NAME = 'ototku-cache-v2';
+/* OtotKu - Service Worker for Offline & PWA Support (v3 - Creatine & Mobile Ready) */
+const CACHE_NAME = 'ototku-cache-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
