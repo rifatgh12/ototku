@@ -406,10 +406,10 @@ textarea.input{resize:vertical;min-height:70px}
       <button class="btn-icon ghost" id="shareDeviceBtn" data-action="openDeviceModal" title="Buka di HP / Perangkat Lain" aria-label="Buka di HP">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
       </button>
-      <!-- Badge Sinkronisasi Cloud (Supabase/Firebase/Lokal) -->
-      <button class="sync-pill sync-off" id="syncStatusBadge" data-action="quickSyncModal" title="Status Sinkronisasi Cloud">
+      <!-- Badge Sinkronisasi Cloud (Cloud Terintegrasi/Supabase/Firebase) -->
+      <button class="sync-pill sync-ok" id="syncStatusBadge" data-action="quickSyncModal" title="Status Sinkronisasi Cloud">
         <span class="sync-dot"></span>
-        <span id="syncStatusText">Lokal</span>
+        <span id="syncStatusText">Cloud Aktif</span>
       </button>
       <button class="btn-icon ghost" id="themeToggle" data-action="toggleTheme" aria-label="Ganti mode terang/gelap"></button>
     </div>
@@ -477,6 +477,11 @@ textarea.input{resize:vertical;min-height:70px}
 const STORAGE_KEY = 'ototku_tracker_v1';
 const SAMPLE_DAYS = 7;
 const PAGES = ['dashboard', 'makan', 'gym', 'progres', 'pengaturan'];
+const GITHUB_PAGES_URL = 'https://rifatgh12.github.io/ototku/';
+const BUILTIN_CLOUD_OBJECT_ID = 'ff808181a09d98f701a16989203670c8';
+const BUILTIN_CLOUD_API = 'https://api.restful-api.dev/objects';
+const BUILTIN_NTFY_BASE = 'https://ntfy.sh';
+const DEFAULT_SYNC_KEY = 'rifatgh12';
 
 const MEAL_SLOTS = [
   { id: 'pagi',  label: 'Pagi',  time: '07.00–08.00', start: 7,  end: 8,  icon: '🌅' },
@@ -501,14 +506,16 @@ const DEFAULT_SETTINGS = {
   dumbbells: [6, 8, 9, 10, 15, 20],
   theme: 'auto',
   cloud: {
-    enabled: false,
-    provider: 'supabase', // 'supabase' | 'firebase'
-    syncKey: 'otot_' + Math.random().toString(36).slice(2, 9),
+    enabled: true,
+    provider: 'builtin', // 'builtin' | 'supabase' | 'firebase'
+    syncKey: DEFAULT_SYNC_KEY,
+    objectId: BUILTIN_CLOUD_OBJECT_ID,
     supabaseUrl: '',
     supabaseKey: '',
     firebaseConfig: '',
     autoSync: true,
     lastSyncedAt: null,
+    migratedToBuiltinV2: true,
   }
 };
 
@@ -760,6 +767,8 @@ function seededRandom(seed) { return () => { seed = (seed * 16807) % 2147483647;
 function createDefaultState() {
   return {
     version: 1,
+    updatedAt: null,
+    _dirty: false,
     settings: clone(DEFAULT_SETTINGS),
     foods: clone(DEFAULT_FOODS),
     template: clone(DEFAULT_TEMPLATE),
@@ -776,8 +785,21 @@ function normalizeState(raw) {
   if (!raw || typeof raw !== 'object') return base;
   const obj = v => v && typeof v === 'object' && !Array.isArray(v);
   const cloud = { ...base.settings.cloud, ...(obj(raw.settings?.cloud) ? raw.settings.cloud : {}) };
+  if (!cloud.migratedToBuiltinV2) {
+    if (!cloud.supabaseUrl && !cloud.firebaseConfig) {
+      cloud.enabled = true;
+      cloud.provider = 'builtin';
+      if (!cloud.syncKey || cloud.syncKey.startsWith('otot_')) {
+        cloud.syncKey = DEFAULT_SYNC_KEY;
+      }
+    }
+    cloud.objectId = cloud.objectId || BUILTIN_CLOUD_OBJECT_ID;
+    cloud.migratedToBuiltinV2 = true;
+  }
   return {
     ...base,
+    updatedAt: raw.updatedAt || null,
+    _dirty: !!raw._dirty,
     sampleLoaded: !!raw.sampleLoaded,
     settings: { ...base.settings, ...(obj(raw.settings) ? raw.settings : {}), cloud },
     foods: Array.isArray(raw.foods) ? raw.foods : base.foods,
@@ -819,12 +841,14 @@ const Store = {
 };
 
 function save() {
+  state.updatedAt = new Date().toISOString();
+  state._dirty = true;
   const ok = Store.saveLocal();
   if (state.settings?.cloud?.enabled && state.settings?.cloud?.autoSync) {
     clearTimeout(Cloud._debounceTimer);
     Cloud._debounceTimer = setTimeout(() => {
       Cloud.push();
-    }, 1200);
+    }, 900);
   }
   return ok;
 }
@@ -847,18 +871,79 @@ const ui = {
 };
 
 /* =========================================================
-   4. CLOUD SYNC (SUPABASE & FIREBASE)
+   4. CLOUD SYNC (CLOUD TERINTEGRASI, SUPABASE & FIREBASE)
    ========================================================= */
 const Cloud = {
   client: null,
-  status: 'offline', // 'offline' | 'ready' | 'syncing' | 'error'
-  statusMsg: 'Lokal',
+  status: 'ready', // 'offline' | 'ready' | 'syncing' | 'error'
+  statusMsg: 'Cloud Aktif',
   _debounceTimer: null,
+  _sse: null,
+  _sseTopic: null,
+  _isPulling: false,
+  deviceId: 'dev_' + Math.random().toString(36).slice(2, 10),
+
+  cleanTopic(syncKey) {
+    const clean = String(syncKey || DEFAULT_SYNC_KEY).trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    return 'ototku_live_' + (clean || DEFAULT_SYNC_KEY);
+  },
 
   init() {
     this.setupClient();
     if (state.settings?.cloud?.enabled && state.settings?.cloud?.autoSync) {
       this.pull({ silent: true });
+    }
+    // Sinkronisasi otomatis saat kembali membuka tab di HP / Laptop atau saat sinyal kembali online
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && state.settings?.cloud?.enabled) {
+        if (state._dirty) this.push();
+        else this.pull({ silent: true });
+      }
+    });
+    window.addEventListener('focus', () => {
+      if (state.settings?.cloud?.enabled && !state._dirty) {
+        this.pull({ silent: true });
+      }
+    });
+    window.addEventListener('online', () => {
+      if (state.settings?.cloud?.enabled) {
+        this.setupClient();
+        if (state._dirty) this.push();
+        else this.pull({ silent: true });
+      }
+    });
+  },
+
+  setupRealtimeListener() {
+    const c = state.settings?.cloud;
+    if (!c || !c.enabled || typeof EventSource === 'undefined') {
+      if (this._sse) { try { this._sse.close(); } catch (e) {} this._sse = null; this._sseTopic = null; }
+      return;
+    }
+    const topic = this.cleanTopic(c.syncKey);
+    if (this._sse && this._sseTopic === topic) return;
+    if (this._sse) { try { this._sse.close(); } catch (e) {} this._sse = null; }
+    this._sseTopic = topic;
+
+    try {
+      const es = new EventSource(`${BUILTIN_NTFY_BASE}/${topic}/sse`);
+      es.onmessage = ev => {
+        try {
+          const outer = JSON.parse(ev.data);
+          if (!outer || outer.event !== 'message' || !outer.message) return;
+          const msg = JSON.parse(outer.message);
+          if (!msg || msg.type !== 'ototku_sync' || msg.deviceId === this.deviceId) return;
+          if (msg.objectId && c.provider === 'builtin') {
+            c.objectId = msg.objectId;
+          }
+          if (!state.updatedAt || ! msg.updatedAt || msg.updatedAt > state.updatedAt) {
+            this.pull({ silent: true });
+          }
+        } catch (e) {}
+      };
+      this._sse = es;
+    } catch (e) {
+      console.warn('Realtime SSE listener warning:', e);
     }
   },
 
@@ -868,11 +953,18 @@ const Cloud = {
       this.client = null;
       this.status = 'offline';
       this.statusMsg = 'Lokal';
+      this.setupRealtimeListener();
       this.updateBadge();
       return;
     }
 
-    if (c.provider === 'supabase') {
+    if (!c.provider || c.provider === 'builtin') {
+      c.provider = 'builtin';
+      c.objectId = c.objectId || BUILTIN_CLOUD_OBJECT_ID;
+      this.client = { type: 'builtin' };
+      this.status = 'ready';
+      this.statusMsg = 'Cloud Aktif';
+    } else if (c.provider === 'supabase') {
       if (typeof window.supabase !== 'undefined' && c.supabaseUrl && c.supabaseKey) {
         try {
           this.client = window.supabase.createClient(c.supabaseUrl.trim(), c.supabaseKey.trim());
@@ -912,6 +1004,7 @@ const Cloud = {
         this.statusMsg = 'Firebase belum lengkap';
       }
     }
+    this.setupRealtimeListener();
     this.updateBadge();
   },
 
@@ -933,17 +1026,21 @@ const Cloud = {
       if (manual) toast('Cloud belum diaktifkan atau belum lengkap', 'warn');
       return;
     }
-    const syncKey = (c.syncKey || 'default_user').trim();
+    const syncKey = (c.syncKey || DEFAULT_SYNC_KEY).trim();
     this.status = 'syncing';
     this.statusMsg = 'Menyimpan...';
     this.updateBadge();
 
     try {
+      const nowIso = state.updatedAt || new Date().toISOString();
+      state.updatedAt = nowIso;
+      const cleanSettings = clone(state.settings);
       const payload = {
         app: 'OtotKu',
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso,
         version: state.version || 1,
-        settings: state.settings,
+        sampleLoaded: !!state.sampleLoaded,
+        settings: cleanSettings,
         foods: state.foods,
         template: state.template,
         program: state.program,
@@ -952,15 +1049,111 @@ const Cloud = {
         bodyLogs: state.bodyLogs,
       };
 
-      if (c.provider === 'supabase') {
+      if (c.provider === 'builtin') {
+        let objId = c.objectId || BUILTIN_CLOUD_OBJECT_ID;
+        let savedOk = false;
+
+        // 1. Simpan ke REST Cloud Database utama
+        try {
+          let existingUsers = {};
+          try {
+            const getRes = await fetch(`${BUILTIN_CLOUD_API}/${objId}`, { cache: 'no-store' });
+            if (getRes.ok) {
+              const cur = await getRes.json();
+              if (cur && cur.data && typeof cur.data.users === 'object') {
+                existingUsers = cur.data.users;
+              }
+            }
+          } catch (e) {}
+
+          existingUsers[syncKey] = payload;
+          const bodyObj = {
+            name: 'ototku_cloud_db',
+            data: {
+              app: 'OtotKu',
+              updatedAt: nowIso,
+              users: existingUsers,
+              ...(syncKey === DEFAULT_SYNC_KEY ? payload : {})
+            }
+          };
+
+          let putRes = await fetch(`${BUILTIN_CLOUD_API}/${objId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bodyObj)
+          });
+
+          if (!putRes.ok && (putRes.status === 404 || putRes.status === 405)) {
+            const postRes = await fetch(BUILTIN_CLOUD_API, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(bodyObj)
+            });
+            if (postRes.ok) {
+              const created = await postRes.json();
+              if (created && created.id) {
+                objId = created.id;
+                c.objectId = objId;
+                savedOk = true;
+              }
+            }
+          } else if (putRes.ok) {
+            savedOk = true;
+          }
+        } catch (errRest) {
+          console.warn('Primary cloud REST warning:', errRest);
+        }
+
+        // 2. Kirim broadcast realtime + backup ringkas ke ntfy channel
+        try {
+          const compactBackup = {
+            app: 'OtotKu',
+            updatedAt: nowIso,
+            sampleLoaded: !!state.sampleLoaded,
+            settings: cleanSettings,
+            foods: state.foods,
+            template: state.template,
+            meals: state.meals,
+            sessions: state.sessions,
+            bodyLogs: state.bodyLogs,
+          };
+          let ntfyMsg = JSON.stringify({
+            type: 'ototku_sync',
+            deviceId: this.deviceId,
+            syncKey,
+            objectId: objId,
+            updatedAt: nowIso,
+            backup: compactBackup
+          });
+          if (ntfyMsg.length > 3800) {
+            ntfyMsg = JSON.stringify({
+              type: 'ototku_sync',
+              deviceId: this.deviceId,
+              syncKey,
+              objectId: objId,
+              updatedAt: nowIso
+            });
+          }
+          const ntfyRes = await fetch(`${BUILTIN_NTFY_BASE}/${this.cleanTopic(syncKey)}`, {
+            method: 'POST',
+            body: ntfyMsg
+          });
+          if (ntfyRes.ok) savedOk = true;
+        } catch (errNtfy) {
+          console.warn('Realtime sync channel warning:', errNtfy);
+        }
+
+        if (!savedOk) throw new Error('Tidak dapat menghubungi server Cloud. Periksa koneksi internet.');
+      } else if (c.provider === 'supabase') {
         const { error } = await this.client
           .from('ototku_sync')
-          .upsert({ user_id: syncKey, data: payload, updated_at: new Date().toISOString() });
+          .upsert({ user_id: syncKey, data: payload, updated_at: nowIso });
         if (error) throw error;
       } else if (c.provider === 'firebase') {
         await this.client.ref('ototku/' + syncKey).set(payload);
       }
 
+      state._dirty = false;
       c.lastSyncedAt = new Date().toISOString();
       Store.saveLocal();
       this.status = 'ready';
@@ -982,14 +1175,80 @@ const Cloud = {
       if (manual) toast('Cloud belum diaktifkan atau belum lengkap', 'warn');
       return;
     }
-    const syncKey = (c.syncKey || 'default_user').trim();
+    if (this._isPulling && !manual) return;
+    this._isPulling = true;
+
+    const syncKey = (c.syncKey || DEFAULT_SYNC_KEY).trim();
     this.status = 'syncing';
     this.statusMsg = 'Mengunduh...';
     this.updateBadge();
 
     try {
       let cloudData = null;
-      if (c.provider === 'supabase') {
+
+      if (c.provider === 'builtin') {
+        let objId = c.objectId || BUILTIN_CLOUD_OBJECT_ID;
+        let ntfyBackup = null;
+
+        // 1. Cek channel sinkronisasi untuk pointer objectId terbaru & backup instan
+        try {
+          const ntfyRes = await fetch(`${BUILTIN_NTFY_BASE}/${this.cleanTopic(syncKey)}/json?poll=1&since=all`, { cache: 'no-store' });
+          if (ntfyRes.ok) {
+            const text = await ntfyRes.text();
+            const lines = text.trim().split('\n').filter(Boolean);
+            for (let i = lines.length - 1; i >= 0; i--) {
+              try {
+                const ev = JSON.parse(lines[i]);
+                if (ev && ev.message) {
+                  const msg = JSON.parse(ev.message);
+                  if (msg && msg.type === 'ototku_sync' && (!msg.syncKey || msg.syncKey === syncKey)) {
+                    if (msg.objectId) {
+                      objId = msg.objectId;
+                      c.objectId = objId;
+                    }
+                    if (msg.backup && msg.backup.settings) {
+                      ntfyBackup = msg.backup;
+                    }
+                    break;
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        } catch (e) {}
+
+        // 2. Ambil data lengkap dari REST Cloud Database utama
+        try {
+          const res = await fetch(`${BUILTIN_CLOUD_API}/${objId}`, { cache: 'no-store' });
+          if (res.ok) {
+            const json = await res.json();
+            const d = json && json.data;
+            if (d) {
+              if (d.users && d.users[syncKey] && d.users[syncKey].settings) {
+                cloudData = d.users[syncKey];
+              } else if (d.settings && syncKey === DEFAULT_SYNC_KEY) {
+                cloudData = d;
+              }
+            }
+          }
+        } catch (e) {}
+
+        // Pilih data terbaru antara REST DB dan ntfyBackup
+        if (ntfyBackup && (!cloudData || (ntfyBackup.updatedAt && (!cloudData.updatedAt || ntfyBackup.updatedAt > cloudData.updatedAt)))) {
+          cloudData = ntfyBackup;
+        }
+
+        // 3. Fallback ke db.json statis di repo jika belum ada di cloud
+        if (!cloudData && syncKey === DEFAULT_SYNC_KEY) {
+          try {
+            const seedRes = await fetch('./db.json?t=' + Date.now(), { cache: 'no-store' });
+            if (seedRes.ok) {
+              const seedJson = await seedRes.json();
+              if (seedJson && seedJson.settings) cloudData = seedJson;
+            }
+          } catch (e) {}
+        }
+      } else if (c.provider === 'supabase') {
         const { data, error } = await this.client
           .from('ototku_sync')
           .select('data, updated_at')
@@ -1002,11 +1261,22 @@ const Cloud = {
         cloudData = snap.val();
       }
 
-      if (cloudData) {
+      if (cloudData && cloudData.settings) {
+        const localHasNewer = state._dirty && state.updatedAt && cloudData.updatedAt && state.updatedAt > cloudData.updatedAt;
+        if (localHasNewer && !manual) {
+          this._isPulling = false;
+          await this.push({ manual: false });
+          return;
+        }
         const currentCloudConf = clone(state.settings.cloud);
         state = normalizeState(cloudData);
-        state.settings.cloud = currentCloudConf;
-        state.settings.cloud.lastSyncedAt = new Date().toISOString();
+        state.settings.cloud = {
+          ...currentCloudConf,
+          objectId: currentCloudConf.objectId || BUILTIN_CLOUD_OBJECT_ID,
+          lastSyncedAt: new Date().toISOString()
+        };
+        state.updatedAt = cloudData.updatedAt || new Date().toISOString();
+        state._dirty = false;
         Store.saveLocal();
         this.status = 'ready';
         this.statusMsg = 'Tersinkron';
@@ -1018,7 +1288,7 @@ const Cloud = {
         this.statusMsg = 'Cloud Siap';
         this.updateBadge();
         await this.push();
-        if (!silent) toast('Cloud baru dihubungkan, data lokal berhasil diunggah!', 'ok');
+        if (!silent) toast('Cloud dihubungkan, data lokal berhasil diunggah!', 'ok');
       }
     } catch (err) {
       console.error('Cloud Pull error:', err);
@@ -1026,6 +1296,8 @@ const Cloud = {
       this.statusMsg = 'Gagal Sync';
       this.updateBadge();
       if (!silent) toast('Gagal mengambil data Cloud: ' + (err.message || err), 'bad');
+    } finally {
+      this._isPulling = false;
     }
   }
 };
@@ -2017,14 +2289,14 @@ function renderSettings() {
     <div class="card" style="border:1.5px solid color-mix(in srgb,var(--primary-2) 45%,var(--border))">
       <div class="card-head">
         <div>
-          <h3 class="card-title">📱 Akses di HP & Perangkat Lain</h3>
-          <p class="muted small">Buka OtotKu di smartphone atau tablet lewat Wi-Fi lokal atau pasang di layar utama HP (PWA).</p>
+          <h3 class="card-title">📱 Akses di HP & Perangkat Lain (GitHub Pages)</h3>
+          <p class="muted small">Buka OtotKu di HP dari mana saja lewat link GitHub Pages dengan database cloud yang sudah terintegrasi otomatis.</p>
         </div>
         <button type="button" class="btn btn-sm btn-primary" data-action="openDeviceModal">📱 Buka QR Code</button>
       </div>
       <div class="btn-row wrap mt">
-        <button type="button" class="btn btn-soft" data-action="openDeviceModal">📲 Cara Pasang di Layar Utama (PWA)</button>
-        <button type="button" class="btn" data-action="openDeployGuide">🌐 Cara Online Gratis (Netlify/Vercel)</button>
+        <button type="button" class="btn btn-soft" data-action="openDeviceModal">📲 Scan QR & Pasang di HP (PWA)</button>
+        <button type="button" class="btn" data-action="openDeployGuide">🌐 Info Link GitHub Pages</button>
       </div>
     </div>
 
@@ -2032,32 +2304,42 @@ function renderSettings() {
     <div class="card" style="border:1.5px solid color-mix(in srgb,var(--primary) 40%,var(--border))">
       <div class="card-head">
         <div>
-          <h3 class="card-title">☁️ Sinkronisasi Cloud (Supabase / Firebase)</h3>
-          <p class="muted small">Simpan otomatis data ke database cloud agar tidak hilang saat ganti perangkat atau membersihkan browser.</p>
+          <h3 class="card-title">☁️ Sinkronisasi Cloud Database</h3>
+          <p class="muted small">Database Cloud sudah terintegrasi otomatis! Data makan, latihan gym, dan berat badan Anda langsung tersinkronisasi antara Laptop dan HP.</p>
         </div>
-        <span class="chip ${c.enabled ? 'chip-ok' : 'chip-muted'}">${c.enabled ? '✓ Aktif' : 'Nonaktif (Lokal)'}</span>
+        <span class="chip ${c.enabled ? 'chip-ok' : 'chip-muted'}">${c.enabled ? '✓ Aktif Otomatis' : 'Nonaktif (Lokal)'}</span>
       </div>
 
       <form data-form="cloudSettings" id="cloudSettingsForm">
         <div class="field mb">
           <span>Pilih Provider Database:</span>
-          ${seg([['supabase', '⚡ Supabase (Rekomendasi)'], ['firebase', '🔥 Firebase']], c.provider || 'supabase', 'cloudProviderSelect')}
+          ${seg([['builtin', '☁️ Cloud Terintegrasi (Otomatis)'], ['supabase', '⚡ Supabase'], ['firebase', '🔥 Firebase']], c.provider || 'builtin', 'cloudProviderSelect')}
         </div>
 
         <div class="form-grid">
           <label class="field">
             <span>Kunci Pengguna / ID Sinkronisasi</span>
-            <input class="input" type="text" name="syncKey" id="cloudSyncKey" value="${esc(c.syncKey || '')}" placeholder="mis. rifat_gym_2026" required>
+            <input class="input" type="text" name="syncKey" id="cloudSyncKey" value="${esc(c.syncKey || DEFAULT_SYNC_KEY)}" placeholder="mis. rifatgh12" required>
           </label>
           <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:10px">
             <button type="button" class="btn btn-soft" data-action="copySyncKey" style="flex:1">📋 Salin Kunci</button>
             <button type="button" class="btn" data-action="newSyncKey" title="Buat Kunci Baru">↺</button>
           </div>
         </div>
-        <p class="hint" style="margin-top:-4px">💡 Gunakan Kunci Sinkronisasi yang sama di HP dan laptop Anda agar datanya langsung terhubung.</p>
+        <p class="hint" style="margin-top:-4px">💡 Secara bawaan, Laptop dan HP Anda sudah memakai Kunci Sinkronisasi <b>${esc(c.syncKey || DEFAULT_SYNC_KEY)}</b> sehingga langsung terhubung tanpa perlu setting tambahan di HP.</p>
+
+        <!-- BUILTIN INTEGRATED CLOUD INFO -->
+        <div id="builtinFields" style="${(c.provider || 'builtin') === 'builtin' ? '' : 'display:none'}">
+          <div class="hint" style="background:var(--ok-soft);color:var(--text);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)">
+            <b style="color:var(--ok)">✅ Database Cloud Terintegrasi Siap Pakai (Zero-Config)</b>
+            <p class="small mt" style="margin-top:4px">
+              Anda tidak perlu membuat akun atau memasukkan API Key apa pun. Saat Anda membuka link GitHub Pages di HP (menggunakan paket data maupun Wi-Fi), semua catatan makanan, jadwal latihan, dan progres berat badan otomatis tersinkronisasi secara real-time!
+            </p>
+          </div>
+        </div>
 
         <!-- SUPABASE INPUTS -->
-        <div id="supabaseFields" style="${(c.provider || 'supabase') === 'supabase' ? '' : 'display:none'}">
+        <div id="supabaseFields" style="${c.provider === 'supabase' ? '' : 'display:none'}">
           <label class="field">
             <span>Supabase Project URL</span>
             <input class="input" type="url" name="supabaseUrl" value="${esc(c.supabaseUrl || '')}" placeholder="https://xyzcompany.supabase.co">
@@ -2085,7 +2367,7 @@ create policy "Public Access" on ototku_sync for all using (true) with check (tr
         </div>
 
         <!-- FIREBASE INPUTS -->
-        <div id="firebaseFields" style="${(c.provider || 'supabase') === 'firebase' ? '' : 'display:none'}">
+        <div id="firebaseFields" style="${c.provider === 'firebase' ? '' : 'display:none'}">
           <label class="field">
             <span>Firebase Database URL atau Config JSON</span>
             <textarea class="input" name="firebaseConfig" rows="3" placeholder='https://proyek-kamu.firebaseio.com atau {"apiKey":"...","databaseURL":"..."}'>${esc(typeof c.firebaseConfig === 'object' ? JSON.stringify(c.firebaseConfig) : c.firebaseConfig || '')}</textarea>
@@ -2345,11 +2627,13 @@ const actions = {
   // Cloud badge quick modal
   quickSyncModal: () => {
     const c = state.settings.cloud || {};
+    const provLabel = (c.provider || 'builtin') === 'builtin' ? 'Cloud Terintegrasi (Otomatis)' : (c.provider === 'supabase' ? 'Supabase' : 'Firebase');
     openModal({
       title: '☁️ Status Sinkronisasi Cloud',
       body: `
-        <p style="margin-bottom:12px">Status saat ini: <b>${esc(Cloud.statusMsg)}</b></p>
-        <p class="small muted" style="margin-bottom:12px">Provider: <b>${esc(c.provider || 'Belum diatur')}</b> · Kunci: <code>${esc(c.syncKey || '-')}</code></p>
+        <p style="margin-bottom:10px">Status saat ini: <b>${esc(Cloud.statusMsg)}</b></p>
+        <p class="small muted" style="margin-bottom:10px">Provider: <b>${esc(provLabel)}</b> · Kunci: <code>${esc(c.syncKey || DEFAULT_SYNC_KEY)}</code></p>
+        <p class="small hint" style="margin-bottom:12px">✅ Database sudah terintegrasi. Saat Anda membuka aplikasi ini di HP melalui link GitHub Pages, data otomatis tersinkronisasi antara Laptop dan HP.</p>
         <div class="btn-row">
           <button type="button" class="btn btn-primary grow" data-action="testSyncNow">🔄 Sinkronkan Sekarang</button>
           <button type="button" class="btn grow" data-action="openCloudConfig">⚙️ Pengaturan Cloud</button>
@@ -2360,39 +2644,26 @@ const actions = {
 
   // Modal Buka di HP / Perangkat Lain
   openDeviceModal: () => {
-    const isFile = location.protocol === 'file:';
-    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    
-    // Perkiraan URL yang bisa dibuka dari HP
-    let targetUrl = location.href;
-    let noticeHtml = '';
-
-    if (isFile) {
-      targetUrl = 'http://192.168.1.9:8000';
-      noticeHtml = `
-        <div class="card" style="background:var(--warn-soft);border-color:var(--warn);margin-bottom:14px;padding:12px">
-          <b>⚠️ Anda sedang membuka file lokal secara langsung (file://)</b>
-          <p class="small mt" style="margin-bottom:6px">Agar HP dan tablet bisa mengakses:</p>
-          <ol class="small" style="padding-left:18px;margin-bottom:4px">
-            <li>Buka folder project di laptop Anda.</li>
-            <li>Klik dua kali file <b>jalankan_server.bat</b>.</li>
-            <li>Arahkan kamera HP ke QR Code yang tampil di jendela hitam tersebut atau buka di browser HP!</li>
-          </ol>
-        </div>`;
-    } else if (isLocalhost) {
-      noticeHtml = `
-        <p class="small muted mb">
-          💡 Pastikan HP dan laptop terhubung ke <b>Wi-Fi yang sama</b>. Jika HP tidak bisa membuka alamat <i>localhost</i>, gunakan alamat IP laptop (misal: <code>http://192.168.1.9:${location.port || '8000'}</code>).
-        </p>`;
-    }
+    const c = state.settings?.cloud || {};
+    const syncKey = (c.syncKey || DEFAULT_SYNC_KEY).trim();
+    const isGitHubHost = location.hostname.endsWith('github.io');
+    const baseOnlineUrl = isGitHubHost ? (location.origin + location.pathname) : GITHUB_PAGES_URL;
+    const targetUrl = syncKey && syncKey !== DEFAULT_SYNC_KEY
+      ? `${baseOnlineUrl}?key=${encodeURIComponent(syncKey)}`
+      : baseOnlineUrl;
 
     openModal({
       title: '📱 Buka di HP / Perangkat Lain',
       body: `
-        ${noticeHtml}
+        <div class="card" style="background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 40%,var(--border));margin-bottom:14px;padding:12px">
+          <b style="color:var(--ok)">🌐 Link Online GitHub Pages & Database Terintegrasi Aktif!</b>
+          <p class="small mt" style="margin-top:4px">
+            Scan QR Code di bawah atau buka tautan GitHub Pages di HP Anda (bisa memakai paket data 4G/5G maupun Wi-Fi tanpa perlu menyalakan laptop). Database sudah terhubung otomatis!
+          </p>
+        </div>
         <div style="display:flex;flex-direction:column;align-items:center;margin:6px 0 16px">
           <div class="qr-modal-box" id="deviceQrContainer"></div>
-          <div class="row" style="margin-top:12px;width:100%;max-width:340px;gap:6px">
+          <div class="row" style="margin-top:12px;width:100%;max-width:360px;gap:6px">
             <input class="input input-sm" id="deviceUrlField" type="text" value="${esc(targetUrl)}" readonly style="text-align:center;font-weight:700">
             <button type="button" class="btn btn-sm btn-primary" data-action="copyDeviceUrl">Salin</button>
           </div>
@@ -2407,8 +2678,8 @@ const actions = {
         </div>
 
         <div class="card" style="padding:14px">
-          <h4 style="font-size:.92rem;margin-bottom:6px">☁️ Sinkronisasi Data Antar-Perangkat</h4>
-          <p class="small muted">Data latihan & makan Anda bisa otomatis terhubung antara laptop dan HP dengan mengaktifkan <b>Sinkronisasi Cloud (Supabase/Firebase)</b> di menu Pengaturan.</p>
+          <h4 style="font-size:.92rem;margin-bottom:6px">☁️ Sinkronisasi Database Otomatis (Laptop ⟷ HP)</h4>
+          <p class="small muted">Database Cloud sudah terintegrasi dengan Kunci Sinkronisasi <code>${esc(syncKey)}</code>. Setiap kali Anda mencatat makan atau menyelesaikan set gym di HP, data langsung tersimpan ke Cloud secara real-time!</p>
         </div>
       `,
       foot: '<button class="btn" type="button" data-action="closeModal">Tutup</button>'
@@ -2450,25 +2721,22 @@ const actions = {
 
   openDeployGuide: () => {
     openModal({
-      title: '🌐 Akses Online Gratis dari Mana Saja',
+      title: '🌐 Akses Online via GitHub Pages',
       body: `
-        <p class="small muted mb">Jika Anda ingin membuka OtotKu di HP tanpa perlu laptop menyala atau tanpa harus berada di satu jaringan Wi-Fi:</p>
-        
-        <div class="card" style="padding:12px;margin-bottom:10px">
-          <h4 style="font-size:.92rem;color:var(--primary);margin-bottom:4px">1. Netlify Drop (Paling Mudah — 30 Detik Tanpa Koding)</h4>
-          <ol class="small" style="padding-left:18px;line-height:1.6">
-            <li>Buka <a href="https://app.netlify.com/drop" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:700">app.netlify.com/drop</a> di laptop.</li>
-            <li>Tarik & lepaskan (drag and drop) seluruh folder <code>fitness tracking</code> ke halaman tersebut.</li>
-            <li>Selesai! Anda langsung mendapatkan link permanen (contoh: <code>https://ototku.netlify.app</code>) yang bisa dibuka kapan saja dari HP!</li>
-          </ol>
+        <div class="card" style="padding:14px;margin-bottom:10px;border-color:var(--primary)">
+          <h4 style="font-size:.92rem;color:var(--primary);margin-bottom:6px">🚀 Link Resmi GitHub Pages Anda:</h4>
+          <p class="small" style="word-break:break-all;margin-bottom:8px">
+            <a href="${esc(GITHUB_PAGES_URL)}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:800;font-size:.95rem">${esc(GITHUB_PAGES_URL)}</a>
+          </p>
+          <p class="small muted">Buka link di atas dari browser HP (Android / iPhone) kapan saja dan di mana saja tanpa perlu menyalakan laptop.</p>
         </div>
 
-        <div class="card" style="padding:12px;margin-bottom:10px">
-          <h4 style="font-size:.92rem;color:var(--primary-2);margin-bottom:4px">2. Vercel atau GitHub Pages</h4>
-          <p class="small muted">Karena OtotKu adalah aplikasi web murni (HTML, CSS, JS), Anda juga bisa mengunggahnya ke GitHub dan mengaktifkan <b>GitHub Pages</b> secara gratis selamanya.</p>
+        <div class="card" style="padding:14px;margin-bottom:10px">
+          <h4 style="font-size:.92rem;color:var(--ok);margin-bottom:4px">☁️ Database Cloud Terintegrasi</h4>
+          <p class="small muted">Aplikasi ini sudah terhubung ke <b>Cloud Database Terintegrasi</b> secara otomatis dengan kunci <code>${esc(state.settings?.cloud?.syncKey || DEFAULT_SYNC_KEY)}</code>. Semua catatan makan, sesi gym, dan berat badan Anda tersinkronisasi otomatis antara Laptop dan HP.</p>
         </div>
 
-        <p class="small hint">💡 Catatan: Karena OtotKu sudah mendukung <b>PWA (Progressive Web App)</b>, setelah di-deploy ke online, web ini bisa di-instal langsung seperti aplikasi native di smartphone Anda!</p>
+        <p class="small hint">💡 Tips: Setelah membuka link GitHub Pages di HP, pilih menu <b>"Tambahkan ke Layar Utama / Instal Aplikasi"</b> agar OtotKu terpasang seperti aplikasi native di layar HP Anda!</p>
       `,
       foot: '<button class="btn" type="button" data-action="closeModal">Tutup</button>'
     });
@@ -2489,11 +2757,12 @@ const actions = {
     }
   },
   newSyncKey: async () => {
-    if (!(await confirmDialog('Buat Kunci Sinkronisasi baru? Jika diubah, data cloud lama tidak akan diakses kecuali Anda memasukkan kuncinya kembali.', { ok: 'Buat Baru' }))) return;
+    if (!(await confirmDialog('Buat Kunci Sinkronisasi baru? Jika diubah, pastikan Anda memasukkan kunci yang sama di HP dan Laptop.', { ok: 'Buat Baru' }))) return;
     const nk = 'otot_' + Math.random().toString(36).slice(2, 9);
     state.settings.cloud.syncKey = nk;
     $('#cloudSyncKey').value = nk;
     save();
+    Cloud.setupRealtimeListener();
     toast('Kunci baru dibuat: ' + nk, 'ok');
   },
   copySqlSnippet: () => {
@@ -2506,6 +2775,7 @@ const actions = {
   cloudProviderSelect: el => {
     const prov = el.dataset.value;
     state.settings.cloud.provider = prov;
+    const bf = $('#builtinFields'); if (bf) bf.style.display = prov === 'builtin' ? '' : 'none';
     $('#supabaseFields').style.display = prov === 'supabase' ? '' : 'none';
     $('#firebaseFields').style.display = prov === 'firebase' ? '' : 'none';
     $$('[data-action="cloudProviderSelect"]').forEach(b => b.classList.toggle('active', b.dataset.value === prov));
@@ -2785,7 +3055,9 @@ const forms = {
   cloudSettings: f => {
     const d = formData(f);
     const c = state.settings.cloud = state.settings.cloud || {};
-    c.syncKey = (d.syncKey || '').trim() || 'default_user';
+    c.provider = c.provider || 'builtin';
+    c.syncKey = (d.syncKey || '').trim() || DEFAULT_SYNC_KEY;
+    c.objectId = c.objectId || BUILTIN_CLOUD_OBJECT_ID;
     c.supabaseUrl = (d.supabaseUrl || '').trim();
     c.supabaseKey = (d.supabaseKey || '').trim();
     c.firebaseConfig = (d.firebaseConfig || '').trim();
@@ -2858,8 +3130,22 @@ function init() {
   } else {
     state = createDefaultState();
     generateSampleData();
+    state.updatedAt = null;
+    state._dirty = false;
     Store.saveLocal();
   }
+
+  // Dukungan parameter URL ?key=... dari QR Code agar otomatis menyamakan Kunci Sinkronisasi di HP
+  try {
+    const params = new URLSearchParams(location.search);
+    const urlKey = (params.get('key') || params.get('sync') || '').trim();
+    if (urlKey && state.settings?.cloud) {
+      state.settings.cloud.syncKey = urlKey;
+      state.settings.cloud.enabled = true;
+      Store.saveLocal();
+    }
+  } catch (e) {}
+
   applyTheme();
   bindEvents();
   Cloud.init();

@@ -1,5 +1,5 @@
-/* OtotKu - Service Worker for Offline & PWA Support */
-const CACHE_NAME = 'ototku-cache-v1';
+/* OtotKu - Service Worker for Offline & PWA Support (v2 - Cloud DB Compatible) */
+const CACHE_NAME = 'ototku-cache-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -8,8 +8,21 @@ const CORE_ASSETS = [
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
+  './icon-maskable.png',
   './apple-touch-icon.png',
   './favicon.png'
+];
+
+// Hosts that serve dynamic Cloud Database / Sync API responses (NEVER cache these)
+const BYPASS_HOSTS = [
+  'api.restful-api.dev',
+  'ntfy.sh',
+  'supabase.co',
+  'firebaseio.com',
+  'firebasedatabase.app',
+  'googleapis.com',
+  'api.github.com',
+  'raw.githubusercontent.com'
 ];
 
 // Install: Cache core assets immediately
@@ -38,22 +51,45 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: Network-first for dynamic, Cache-first / stale-while-revalidate for static assets
+// Fetch: Bypass Cloud DB APIs, Network-first for HTML/JSON, Stale-while-revalidate for static assets
 self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Skip non-GET and chrome-extension / non-http requests
+  // Skip non-GET and non-http requests
   if (req.method !== 'GET' || !url.protocol.startsWith('http')) {
     return;
   }
 
-  // Handle local files & CDN scripts
+  // Never cache dynamic database / sync requests or SSE streams
+  if (
+    BYPASS_HOSTS.some(h => url.hostname === h || url.hostname.endsWith('.' + h)) ||
+    url.pathname.endsWith('/db.json') ||
+    req.headers.get('accept') === 'text/event-stream'
+  ) {
+    return;
+  }
+
+  // Network-first for HTML navigation so GitHub Pages updates appear immediately
+  if (req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) {
+    event.respondWith(
+      fetch(req).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
+        }
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(req).then(r => r || caches.match('./index.html'));
+      })
+    );
+    return;
+  }
+
+  // Stale-while-revalidate for static assets (icons, scripts, fonts)
   event.respondWith(
     caches.match(req).then(cachedResponse => {
-      // Fetch from network in background or foreground
       const fetchPromise = fetch(req).then(networkResponse => {
-        // Cache valid responses for static assets and CDNs
         if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then(cache => {
@@ -61,15 +97,8 @@ self.addEventListener('fetch', event => {
           });
         }
         return networkResponse;
-      }).catch(err => {
-        // If offline and request is HTML navigation, fallback to index.html
-        if (req.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        return null;
-      });
+      }).catch(() => null);
 
-      // If we have cached version, return it right away; otherwise wait for network
       return cachedResponse || fetchPromise;
     })
   );
