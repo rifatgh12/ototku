@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OtotKu — Tracker Makan & Latihan Gym</title>
+<meta name="description" content="Pantau protein, kalori, lemak jenuh, biaya makan, dan progres latihan dumbbell 4 hari per minggu dengan sinkronisasi cloud Supabase/Firebase.">
+<meta name="theme-color" content="#f4f5fb">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="OtotKu">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Offline QR Code Generator -->
+<script src="qrcode.min.js" defer></script>
+<!-- Chart.js dari cdnjs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<!-- Supabase Client CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<!-- Firebase Compat SDK CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js" defer></script>
+
+<style>
+/* =========================================================
+   1. DESIGN TOKENS (mode terang & gelap)
+   ========================================================= */
+:root{
+  --bg:#f4f5fb; --surface:rgba(255,255,255,.86); --solid:#ffffff; --soft:#eef0f7; --border:#e4e7f1;
+  --text:#141a2e; --muted:#69718a;
+  --primary:#6c4cf0; --primary-2:#0ea5e9; --primary-soft:rgba(108,76,240,.1);
+  --ok:#0f9f6e; --ok-soft:rgba(16,185,129,.13);
+  --warn:#c77d02; --warn-soft:rgba(245,158,11,.16);
+  --bad:#e03e3e; --bad-soft:rgba(239,68,68,.12);
+  --glow-1:rgba(108,76,240,.16); --glow-2:rgba(14,165,233,.13);
+  --shadow:0 1px 2px rgba(20,26,60,.04),0 10px 30px -12px rgba(20,26,60,.14);
+  --radius:20px; --tab-h:68px;
+  --grad:linear-gradient(135deg,#6c4cf0 0%,#8b5cf6 45%,#0ea5e9 100%);
+}
+[data-theme="dark"]{
+  --bg:#0a0c16; --surface:rgba(22,25,42,.82); --solid:#151829; --soft:#1e2238; --border:#272c45;
+  --text:#eceefa; --muted:#959cba;
+  --primary:#8b72ff; --primary-2:#38bdf8; --primary-soft:rgba(139,114,255,.16);
+  --ok:#34d399; --ok-soft:rgba(52,211,153,.14);
+  --warn:#fbbf24; --warn-soft:rgba(251,191,36,.14);
+  --bad:#f87171; --bad-soft:rgba(248,113,113,.15);
+  --glow-1:rgba(139,114,255,.2); --glow-2:rgba(56,189,248,.1);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px -12px rgba(0,0,0,.55);
+  --grad:linear-gradient(135deg,#5b3fe0 0%,#7c4ddb 45%,#0b86c4 100%);
+  color-scheme:dark;
+}
+
+/* =========================================================
+   2. BASE
+   ========================================================= */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(var(--tab-h) + 24px + env(safe-area-inset-bottom));
+  transition:background-color .3s,color .3s;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(60% 40% at 0% 0%,var(--glow-1),transparent 70%),
+             radial-gradient(50% 35% at 100% 5%,var(--glow-2),transparent 70%);
+}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+h2{font-size:1.45rem;font-weight:800;letter-spacing:-.02em}
+h3{font-size:1rem;font-weight:700}
+.muted{color:var(--muted)} .small{font-size:.8rem} .mt{margin-top:12px} .mb{margin-bottom:12px}
+.container{max-width:820px;margin:0 auto;padding:0 16px}
+.row{display:flex;align-items:center;gap:10px} .row.between{justify-content:space-between} .grow{flex:1;min-width:0}
+.wrap{flex-wrap:wrap}
+
+/* Header */
+.app-header{position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  background:color-mix(in srgb,var(--bg) 75%,transparent);border-bottom:1px solid var(--border)}
+.app-header .container{display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:36px;height:36px;border-radius:11px;background:var(--grad);display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px -6px var(--primary)}
+.brand h1{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;line-height:1}
+.brand small{display:block;font-size:.7rem;color:var(--muted);font-weight:600;margin-top:2px}
+.header-actions{display:flex;align-items:center;gap:8px}
+
+/* Sync status pill */
+.sync-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;font-size:.76rem;font-weight:700;border:1px solid var(--border);background:var(--solid);cursor:pointer;transition:all .2s;text-decoration:none}
+.sync-pill:hover{border-color:var(--primary)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#959cba;display:inline-block;transition:background .3s}
+.sync-ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 35%,var(--border))}
+.sync-ok .sync-dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.sync-busy{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 35%,var(--border))}
+.sync-busy .sync-dot{background:var(--warn);animation:pulse 1s infinite}
+.sync-err{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 35%,var(--border))}
+.sync-err .sync-dot{background:var(--bad)}
+.sync-off{color:var(--muted)}
+.sync-off .sync-dot{background:var(--muted)}
+@keyframes pulse{0%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.25)}100%{opacity:1;transform:scale(1)}}
+
+/* Pages */
+.page{display:none;padding-top:18px}
+.page.active{display:block;animation:pageIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.page-head p{font-size:.88rem;margin-top:2px}
+
+/* Card */
+.card{background:var(--surface);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+.card-title{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.card-head .card-title{margin-bottom:2px}
+.grid-2{display:grid;grid-template-columns:1fr;gap:14px}
+.grid-2>.card{margin-bottom:0}
+.grid-2.mb-gap{margin-bottom:14px}
+@media(min-width:720px){.grid-2{grid-template-columns:1fr 1fr}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--solid);
+  padding:10px 14px;border-radius:12px;font-weight:650;font-size:.88rem;transition:transform .15s,background .2s,box-shadow .2s,border-color .2s;white-space:nowrap}
+.btn:hover{border-color:color-mix(in srgb,var(--primary) 40%,var(--border))}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn-primary{background:var(--grad);color:#fff;border:none;box-shadow:0 8px 18px -8px var(--primary)}
+.btn-primary:hover{box-shadow:0 10px 22px -8px var(--primary);filter:brightness(1.05)}
+.btn-soft{background:var(--primary-soft);color:var(--primary);border-color:transparent}
+.btn-danger{background:var(--bad);color:#fff;border:none}
+.btn-danger-soft{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.btn-sm{padding:7px 11px;font-size:.8rem;border-radius:10px}
+.btn-block{width:100%}
+.btn-icon{width:38px;height:38px;flex:none;display:inline-grid;place-items:center;border-radius:12px;border:1px solid var(--border);background:var(--solid);transition:transform .15s,background .2s}
+.btn-icon:active{transform:scale(.92)}
+.btn-icon.ghost{border-color:transparent;background:transparent}
+.btn-icon.ghost:hover{background:var(--soft)}
+.btn-icon svg{width:18px;height:18px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Inputs */
+.input,select.input,textarea.input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:var(--soft);
+  font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);background:var(--solid)}
+.input-sm{padding:8px 10px;font-size:15px;border-radius:10px}
+textarea.input{resize:vertical;min-height:70px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.field>span{font-size:.78rem;font-weight:650;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.form-grid.three{grid-template-columns:repeat(3,1fr)}
+@media(max-width:420px){.form-grid.three{grid-template-columns:1fr 1fr}}
+.hint{font-size:.78rem;color:var(--muted);background:var(--soft);padding:8px 10px;border-radius:10px;margin:2px 0 12px}
+
+/* Segmented control */
+.seg{display:flex;background:var(--soft);padding:4px;border-radius:14px;gap:4px;border:1px solid var(--border)}
+.seg button{flex:1;border:none;background:transparent;padding:8px 12px;border-radius:10px;font-weight:650;font-size:.84rem;color:var(--muted);transition:all .2s;white-space:nowrap}
+.seg button.active{background:var(--solid);color:var(--primary);box-shadow:0 2px 8px -2px rgba(0,0,0,.12)}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;padding:3px 9px;border-radius:99px;font-weight:700;white-space:nowrap}
+.chip-ok{background:var(--ok-soft);color:var(--ok)} .chip-warn{background:var(--warn-soft);color:var(--warn)}
+.chip-bad{background:var(--bad-soft);color:var(--bad)} .chip-muted{background:var(--soft);color:var(--muted)}
+.chip-primary{background:var(--primary-soft);color:var(--primary)}
+
+/* Progress metrics */
+.metric{margin-bottom:14px}
+.metric:last-child{margin-bottom:0}
+.metric-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.metric-label{font-weight:650;font-size:.88rem;display:flex;align-items:center;gap:6px}
+.metric-val{font-size:.82rem;color:var(--muted);text-align:right}
+.metric-val b{color:var(--text);font-size:.92rem}
+.metric-sub{font-size:.75rem;color:var(--muted);margin-top:5px}
+.bar{height:10px;background:var(--soft);border-radius:99px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:inherit;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar-ok .bar-fill{background:linear-gradient(90deg,#10b981,#34d399)}
+.bar-warn .bar-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+.bar-bad .bar-fill{background:linear-gradient(90deg,#ef4444,#fb7185)}
+.bar-primary .bar-fill{background:var(--grad)}
+.bar-marker{position:absolute;top:0;bottom:0;width:2px;background:var(--text);opacity:.35}
+.anim .bar-fill{animation:grow .9s cubic-bezier(.2,.8,.2,1)}
+@keyframes grow{from{width:0}}
+
+/* Hero (dashboard) */
+.hero{background:var(--grad);color:#fff;border:none;position:relative;overflow:hidden;padding:20px}
+.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.1)}
+.hero::before{width:220px;height:220px;right:-60px;top:-80px}
+.hero::after{width:140px;height:140px;left:-50px;bottom:-70px}
+.hero-inner{position:relative;z-index:1;display:flex;align-items:center;gap:16px;justify-content:space-between}
+.hero-date{font-size:.78rem;opacity:.85;font-weight:600}
+.hero h2{font-size:1.3rem;margin:4px 0 6px}
+.hero-big{font-size:2.3rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.hero-big small{font-size:1rem;font-weight:600;opacity:.85}
+.hero-sub{font-size:.8rem;opacity:.9;margin-top:6px}
+.ring{position:relative;width:118px;height:118px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-track{stroke:rgba(255,255,255,.22)}
+.ring-prog{stroke:#fff;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1);animation:ringIn 1.1s cubic-bezier(.2,.8,.2,1)}
+@keyframes ringIn{from{stroke-dashoffset:314.16}}
+.ring-label{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-weight:800;font-size:1.4rem;line-height:1}
+.ring-label small{display:block;font-size:.65rem;font-weight:600;opacity:.85;margin-top:3px}
+
+/* Stat tiles */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 12px;box-shadow:var(--shadow);text-align:left}
+.stat-ico{font-size:1.3rem}
+.stat-val{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-top:4px;line-height:1.1}
+.stat-val small{font-size:.75rem;color:var(--muted);font-weight:600}
+.stat-lbl{font-size:.72rem;color:var(--muted);font-weight:600;margin-top:2px}
+
+/* Lists */
+.list{list-style:none}
+.list li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border);font-size:.88rem}
+.list li:last-child{border-bottom:none}
+.empty{text-align:center;color:var(--muted);padding:26px 10px;font-size:.9rem}
+.empty-sm{color:var(--muted);font-size:.82rem;padding:6px 0}
+.big-emoji{font-size:2.4rem;display:block;margin-bottom:6px}
+
+/* Date navigator */
+.date-nav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.date-display{flex:1;position:relative;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:9px 10px;font-weight:650;font-size:.9rem;cursor:pointer;min-width:0}
+.date-display .today-tag{color:var(--primary)}
+.date-display input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+
+/* Meal slots */
+.slot-head{display:flex;align-items:center;gap:10px}
+.slot-icon{width:42px;height:42px;border-radius:13px;background:var(--primary-soft);display:grid;place-items:center;font-size:1.25rem;flex:none}
+.slot-tot{font-size:.75rem;color:var(--muted);margin-top:2px}
+.entry-list{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.entry{display:flex;align-items:center;gap:10px;background:var(--soft);padding:10px;border-radius:14px}
+.entry-main{flex:1;min-width:0}
+.entry-name{font-weight:650;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.entry-meta{font-size:.72rem;color:var(--muted);margin-top:2px}
+.stepper{display:flex;align-items:center;background:var(--solid);border:1px solid var(--border);border-radius:10px;overflow:hidden;flex:none}
+.stepper button{border:none;background:transparent;width:30px;height:32px;font-size:1.1rem;font-weight:700;color:var(--primary)}
+.stepper button:active{background:var(--primary-soft)}
+.stepper input{width:38px;border:none;background:transparent;text-align:center;font-weight:700;font-size:15px;outline:none;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.quick-actions .btn:first-child{grid-column:1/-1;padding:13px}
+
+/* Food pick list */
+.food-pick{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.food-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--border);background:var(--soft);padding:11px 12px;border-radius:14px;transition:border-color .2s,transform .15s}
+.food-item:hover{border-color:var(--primary)}
+.food-item:active{transform:scale(.99)}
+.food-item .fi-main{flex:1;min-width:0}
+.food-item b{display:block;font-size:.9rem}
+.food-item span{font-size:.74rem;color:var(--muted)}
+.fi-add{width:32px;height:32px;border-radius:10px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.nutri{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+
+/* Cost tiles */
+.cost-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:560px){.cost-grid{grid-template-columns:1fr 1fr}}
+.cost-tile{background:var(--soft);border-radius:16px;padding:12px}
+.cost-tile .lbl{font-size:.75rem;color:var(--muted);font-weight:650}
+.cost-tile .val{font-size:1.25rem;font-weight:800;margin:2px 0 8px;letter-spacing:-.02em}
+
+/* Gym Exercise Cards & Media */
+.session-head select{margin-top:4px}
+.ex-card{transition:border-color .3s}
+.ex-card.complete{border-color:color-mix(in srgb,var(--ok) 55%,var(--border))}
+.ex-top-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.ex-thumb-btn{position:relative;width:56px;height:56px;border-radius:13px;overflow:hidden;border:1px solid var(--border);background:var(--soft);flex:none;cursor:pointer;padding:0}
+.ex-thumb-img{width:100%;height:100%;object-fit:cover;display:block}
+.ex-thumb-play{position:absolute;inset:0;background:rgba(0,0,0,.35);display:grid;place-items:center;color:#fff;font-size:.9rem;transition:background .2s}
+.ex-thumb-btn:hover .ex-thumb-play{background:rgba(108,76,240,.7)}
+.ex-title-info{flex:1;min-width:0}
+.ex-title-info h3{font-size:1rem;line-height:1.2}
+.ex-target{font-size:.78rem;color:var(--muted);margin-top:3px}
+.ex-title-side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.prev{font-size:.76rem;background:var(--soft);border-radius:12px;padding:8px 10px;margin:8px 0 0;color:var(--muted)}
+.prev b{color:var(--text);font-weight:650}
+.prev-note{margin-top:4px;font-style:italic}
+.suggest{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:9px 11px;margin-top:8px;font-weight:600}
+.suggest.info{background:var(--primary-soft);color:var(--primary)}
+.sets{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.set-row{display:grid;grid-template-columns:30px minmax(0,1.25fr) minmax(0,1fr) 42px;gap:8px;align-items:center;padding:5px;border-radius:12px;transition:background .25s}
+.set-row.done{background:var(--ok-soft)}
+.set-head{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 5px}
+.set-no{width:26px;height:26px;border-radius:8px;background:var(--soft);display:grid;place-items:center;font-size:.78rem;font-weight:700}
+.set-row.done .set-no{background:var(--ok);color:#fff}
+.check{position:relative;width:38px;height:38px;display:inline-block}
+.check input{appearance:none;-webkit-appearance:none;width:38px;height:38px;border-radius:11px;border:2px solid var(--border);background:var(--solid);cursor:pointer;transition:all .2s;margin:0}
+.check input:checked{background:linear-gradient(135deg,#10b981,#34d399);border-color:transparent;transform:scale(1.04)}
+.check span{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;color:#fff;font-weight:900;opacity:0;transition:opacity .2s}
+.check input:checked+span{opacity:1}
+.check span::after{content:'✓';font-size:1.1rem}
+.rest-card{text-align:center;padding:28px 18px}
+.schedule-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.schedule-row .day{width:70px;font-weight:650;font-size:.88rem}
+.ex-line{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--border)}
+.ex-line:last-of-type{border-bottom:none}
+.ex-line .grow b{font-size:.88rem;display:block}
+.ex-line .grow span{font-size:.74rem;color:var(--muted)}
+.ex-actions{display:flex;gap:2px}
+.ex-actions .btn-icon{width:32px;height:32px;border-radius:9px;font-size:.85rem}
+
+/* Movement Guide Modal */
+.guide-media-box{position:relative;width:100%;padding-top:56.25%;background:#090b14;border-radius:18px;overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow)}
+.guide-media-box iframe,.guide-media-box img,.guide-media-box video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:none}
+.guide-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.guide-cues{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.guide-cue{display:flex;align-items:flex-start;gap:10px;font-size:.87rem;line-height:1.45}
+.guide-num{width:22px;height:22px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:.75rem;display:grid;place-items:center;flex:none;margin-top:2px}
+.guide-box{background:var(--soft);border-radius:14px;padding:12px;margin-top:10px;font-size:.84rem}
+.guide-box.warn{background:var(--bad-soft);color:var(--text);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.guide-box b{display:block;margin-bottom:4px}
+.guide-box.warn b{color:var(--bad)}
+
+/* Cloud SQL snippet box */
+.code-box{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:10px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.76rem;overflow-x:auto;white-space:pre;user-select:all;color:var(--text);margin-top:6px}
+
+/* Charts */
+.chart-box{position:relative;height:230px}
+.chart-empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.85rem;text-align:center;padding:10px}
+
+/* Bottom tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;padding:0 10px env(safe-area-inset-bottom);
+  background:color-mix(in srgb,var(--solid) 82%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--border)}
+.tabbar-inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tab-h)}
+.tab{border:none;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.66rem;font-weight:650;color:var(--muted);transition:color .2s;position:relative}
+.tab .tab-ico{width:46px;height:30px;border-radius:99px;display:grid;place-items:center;transition:background .25s,transform .2s}
+.tab svg{width:21px;height:21px}
+.tab.active{color:var(--primary)}
+.tab.active .tab-ico{background:var(--primary-soft);transform:translateY(-1px)}
+.tab:active .tab-ico{transform:scale(.9)}
+
+/* Rest timer */
+.timer{position:fixed;left:50%;bottom:calc(var(--tab-h) + 12px + env(safe-area-inset-bottom));z-index:60;width:min(94%,500px);
+  transform:translate(-50%,140%);opacity:0;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s;
+  background:var(--solid);border:1px solid var(--border);border-radius:20px;box-shadow:0 18px 40px -12px rgba(0,0,0,.35);
+  padding:10px 12px;display:flex;align-items:center;gap:12px}
+.timer.show{transform:translate(-50%,0);opacity:1}
+.timer.finished{border-color:var(--ok)}
+.timer-ring{position:relative;width:54px;height:54px;flex:none}
+.timer-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer-ring circle{fill:none;stroke-width:5}
+.timer-ring .t-track{stroke:var(--soft)}
+.timer-ring .t-prog{stroke:var(--primary);stroke-linecap:round;transition:stroke-dashoffset .25s linear}
+.timer.finished .t-prog{stroke:var(--ok)}
+.timer-text{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:.85rem;font-variant-numeric:tabular-nums}
+.timer-info{flex:1;min-width:0}
+.timer-info b{font-size:.9rem;display:block}
+.timer-info span{font-size:.74rem;color:var(--muted)}
+
+/* Modal (bottom-sheet di HP, dialog di desktop) */
+.modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(5,8,20,.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s}
+.modal-backdrop[hidden]{display:none}
+.modal-backdrop.open{opacity:1}
+.modal{background:var(--solid);width:100%;max-width:560px;max-height:90vh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+.modal-backdrop.open .modal{transform:none}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 8px}
+.modal-head h3{font-size:1.1rem}
+.modal-body{padding:6px 18px 12px;overflow-y:auto}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px 16px;border-top:1px solid var(--border)}
+.modal-foot:empty{display:none}
+.modal-foot .btn{flex:1}
+@media(min-width:640px){.modal-backdrop{align-items:center}.modal{border-radius:24px;transform:translateY(30px) scale(.97)}.modal-foot .btn{flex:none}}
+
+/* QR Box & Device Modal */
+.qr-modal-box{background:#fff;padding:14px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.08);display:inline-flex;justify-content:center;align-items:center;margin:8px auto}
+.qr-modal-box img,.qr-modal-box canvas{display:block;border-radius:8px}
+.device-badge-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;background:var(--soft);border:1px solid var(--border);margin-bottom:10px}
+
+/* Toast */
+.toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;width:min(92%,420px);pointer-events:none}
+.toast{pointer-events:auto;background:var(--text);color:var(--bg);padding:11px 14px;border-radius:14px;font-size:.85rem;font-weight:600;
+  box-shadow:0 12px 30px -10px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(.2,.8,.2,1)}
+.toast.ok{background:#0f9f6e;color:#fff} .toast.warn{background:#c77d02;color:#fff} .toast.bad{background:#e03e3e;color:#fff}
+.toast button{margin-left:auto;border:none;background:rgba(255,255,255,.2);color:inherit;padding:5px 10px;border-radius:8px;font-weight:700;font-size:.78rem}
+.toast.out{opacity:0;transform:translateY(-8px);transition:all .25s}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}}
+
+.foot-note{text-align:center;color:var(--muted);font-size:.75rem;margin:8px 0 20px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.log-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border)}
+.log-item:last-child{border-bottom:none}
+.log-item .grow b{font-size:.92rem}
+.log-item .grow span{display:block;font-size:.74rem;color:var(--muted)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="app-header">
+  <div class="container">
+    <div class="brand">
+      <div class="brand-logo" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>
+      </div>
+      <div><h1>OtotKu</h1><small>Tracker Makan & Gym</small></div>
+    </div>
+    <div class="header-actions">
+      <!-- Tombol Buka di HP / Perangkat Lain -->
+      <button class="btn-icon ghost" id="shareDeviceBtn" data-action="openDeviceModal" title="Buka di HP / Perangkat Lain" aria-label="Buka di HP">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+      </button>
+      <!-- Badge Sinkronisasi Cloud (Supabase/Firebase/Lokal) -->
+      <button class="sync-pill sync-off" id="syncStatusBadge" data-action="quickSyncModal" title="Status Sinkronisasi Cloud">
+        <span class="sync-dot"></span>
+        <span id="syncStatusText">Lokal</span>
+      </button>
+      <button class="btn-icon ghost" id="themeToggle" data-action="toggleTheme" aria-label="Ganti mode terang/gelap"></button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HALAMAN ===================== -->
+<main class="container" id="main">
+  <section class="page" id="page-dashboard" aria-label="Dashboard"></section>
+  <section class="page" id="page-makan" aria-label="Tracker makan"></section>
+  <section class="page" id="page-gym" aria-label="Tracker gym"></section>
+  <section class="page" id="page-progres" aria-label="Progres dan grafik"></section>
+  <section class="page" id="page-pengaturan" aria-label="Pengaturan"></section>
+  <noscript><p class="empty">Aplikasi ini membutuhkan JavaScript.</p></noscript>
+</main>
+
+<!-- ===================== TIMER ISTIRAHAT ===================== -->
+<div class="timer" id="timer" role="timer" aria-live="polite">
+  <div class="timer-ring">
+    <svg viewBox="0 0 54 54"><circle class="t-track" cx="27" cy="27" r="23"/><circle class="t-prog" id="timerProg" cx="27" cy="27" r="23" stroke-dasharray="144.5" stroke-dashoffset="0"/></svg>
+    <div class="timer-text" id="timerText">1:30</div>
+  </div>
+  <div class="timer-info"><b id="timerTitle">Istirahat</b><span id="timerSub">Tarik napas, siapkan set berikutnya</span></div>
+  <button class="btn btn-sm" data-action="timerAdd" data-sec="-15" id="timerMinus" aria-label="Kurangi 15 detik">−15</button>
+  <button class="btn btn-sm" data-action="timerAdd" data-sec="15" id="timerPlus" aria-label="Tambah 15 detik">+15</button>
+  <button class="btn-icon ghost" data-action="timerStop" id="timerClose" aria-label="Tutup timer">✕</button>
+</div>
+
+<!-- ===================== NAVIGASI BAWAH ===================== -->
+<nav class="tabbar" aria-label="Navigasi utama">
+  <div class="tabbar-inner">
+    <button class="tab" data-action="nav" data-page="dashboard" id="tab-dashboard">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Dashboard</button>
+    <button class="tab" data-action="nav" data-page="makan" id="tab-makan">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg></span>Makan</button>
+    <button class="tab" data-action="nav" data-page="gym" id="tab-gym">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg></span>Gym</button>
+    <button class="tab" data-action="nav" data-page="progres" id="tab-progres">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>Progres</button>
+    <button class="tab" data-action="nav" data-page="pengaturan" id="tab-pengaturan">
+      <span class="tab-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></svg></span>Pengaturan</button>
+  </div>
+</nav>
+
+<!-- ===================== MODAL & TOAST ===================== -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h3 id="modalTitle"></h3><button class="btn-icon ghost" data-action="closeModal" id="modalClose" aria-label="Tutup">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+'use strict';
+/* =========================================================
+   OtotKu — Tracker Makan & Latihan Gym (dengan Supabase/Firebase)
+   ========================================================= */
+
+/* =========================================================
+   1. KONFIGURASI & DATA BAWAAN
+   ========================================================= */
+const STORAGE_KEY = 'ototku_tracker_v1';
+const SAMPLE_DAYS = 7;
+const PAGES = ['dashboard', 'makan', 'gym', 'progres', 'pengaturan'];
+
+const MEAL_SLOTS = [
+  { id: 'pagi',  label: 'Pagi',  time: '07.00–08.00', start: 7,  end: 8,  icon: '🌅' },
+  { id: 'sore',  label: 'Sore',  time: '15.00–16.00', start: 15, end: 16, icon: '🌤️' },
+  { id: 'malam', label: 'Malam', time: '20.00–21.00', start: 20, end: 21, icon: '🌙' },
+];
+
+const DAY_NAMES   = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const WEEK_ORDER  = [1, 2, 3, 4, 5, 6, 0]; // Senin → Minggu
+
+const DEFAULT_SETTINGS = {
+  weight: 55,
+  goal: 'Membangun otot (hipertrofi)',
+  proteinFactorMin: 1.6, proteinFactorMax: 2.2, proteinFactorIdeal: 1.9,
+  proteinMin: 88, proteinMax: 121, proteinTarget: 105,
+  calorieTarget: 1420,
+  satFatLimit: 22,
+  budget: 40000,
+  restSeconds: 90,
+  dumbbells: [6, 8, 9, 10, 15, 20],
+  theme: 'auto',
+  cloud: {
+    enabled: false,
+    provider: 'supabase', // 'supabase' | 'firebase'
+    syncKey: 'otot_' + Math.random().toString(36).slice(2, 9),
+    supabaseUrl: '',
+    supabaseKey: '',
+    firebaseConfig: '',
+    autoSync: true,
+    lastSyncedAt: null,
+  }
+};
+
+const DEFAULT_FOODS = [
+  { id: 'telur', name: 'Telur rebus utuh', portion: '1 butir (±50 g)',  protein: 6.3, kcal: 72,  satFat: 1.6, priceMin: 1800,  priceMax: 2000,  builtin: true },
+  { id: 'nasi',  name: 'Nasi putih',       portion: '150 g (±1 centong)', protein: 4.0, kcal: 195, satFat: 0.1, priceMin: 3000,  priceMax: 4000,  builtin: true },
+  { id: 'ayam',  name: 'Ayam goreng',      portion: '100 g (1 potong)', protein: 25,  kcal: 260, satFat: 3.5, priceMin: 10000, priceMax: 12000, builtin: true },
+  { id: 'tempe', name: 'Tempe goreng',     portion: '50 g (1 potong)',  protein: 9.5, kcal: 175, satFat: 1.8, priceMin: 1000,  priceMax: 2000,  builtin: true },
+];
+
+const DEFAULT_TEMPLATE = {
+  pagi:  [{ foodId: 'telur', qty: 3 }],
+  sore:  [{ foodId: 'nasi', qty: 1 }, { foodId: 'ayam', qty: 1 }, { foodId: 'tempe', qty: 1 }],
+  malam: [{ foodId: 'ayam', qty: 1 }, { foodId: 'telur', qty: 2 }],
+};
+
+/** Helper pembuat latihan dengan foto/ilustrasi, video tutorial YouTube, dan panduan teknik */
+function ex(name, sets, repMin, repMax, wMin, wMax, opts = {}) {
+  return {
+    id: uid(),
+    name,
+    sets,
+    repMin,
+    repMax,
+    wMin,
+    wMax,
+    unit: opts.unit || 'rep',
+    perSide: opts.perSide || '',
+    target: opts.target || 'Otot utama & penunjang',
+    media: opts.media || '',
+    video: opts.video || '',
+    cues: opts.cues || '',
+    mistakes: opts.mistakes || '',
+  };
+}
+
+/** Program latihan dumbbell 4 hari/minggu dengan foto & video gerakan */
+function createDefaultProgram() {
+  return {
+    schedule: { 0: 'rest', 1: 'upperA', 2: 'lowerA', 3: 'rest', 4: 'upperB', 5: 'lowerB', 6: 'rest' },
+    workouts: {
+      upperA: { name: 'Upper A', focus: 'Dada, punggung, bahu, lengan', exercises: [
+        ex('Dumbbell Floor Press', 4, 8, 10, 15, 20, {
+          target: 'Dada (Pectoralis), Triceps, Bahu Depan',
+          media: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/uUGDRwge4F8',
+          cues: '1. Berbaring telentang di lantai, tekuk lutut 90° dengan telapak kaki menapak kokoh.\n2. Posisikan siku membentuk sudut ±45° dari tubuh (jangan melebar 90° sejajar bahu).\n3. Dorong kedua dumbbell ke atas hingga lurus di atas dada sambil menghembuskan napas.\n4. Turunkan perlahan 2-3 detik hingga lengan atas menyentuh lantai tanpa menghentak.',
+          mistakes: 'Siku terlalu melebar sejajar leher/bahu (risiko cedera sendi), memantulkan siku keras ke lantai.',
+        }),
+        ex('One-Arm Dumbbell Row', 4, 10, 10, 15, 20, {
+          perSide: 'sisi',
+          target: 'Punggung (Latissimus Dorsi), Rhomboids, Biceps',
+          media: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/dFzUjzfih7k',
+          cues: '1. Tumpu satu tangan & lutut pada bangku/kursi atau bungkukkan tubuh 45° dengan stabil.\n2. Tarik dumbbell ke arah pinggul/saku celana (bukan ke arah dada).\n3. Rapatkan belikat di puncak gerakan dan jeda 1 detik.\n4. Ulur kembali ke bawah secara terkontrol dengan punggung tetap lurus.',
+          mistakes: 'Memutar pinggul atau dada demi melempar beban, menarik hanya dengan tangan tanpa melibatkan punggung.',
+        }),
+        ex('Dumbbell Shoulder Press', 3, 10, 12, 10, 15, {
+          target: 'Bahu Depan & Samping (Deltoid), Triceps',
+          media: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/qEwKCR5JCog',
+          cues: '1. Duduk atau berdiri tegap, kunci otot perut (core tight).\n2. Posisikan dumbbell di samping telinga dengan siku sedikit mengarah ke depan.\n3. Dorong vertikal ke atas kepala sampai lengan lurus tanpa membenturkan dumbbell.\n4. Turunkan perlahan setinggi telinga.',
+          mistakes: 'Punggung bawah melengkung berlebihan (lordosis), membuang siku terlalu ke belakang.',
+        }),
+        ex('Lateral Raise', 3, 12, 15, 6, 8, {
+          target: 'Bahu Samping (Lateral Deltoid) — Membentuk Bahu Lebar',
+          media: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/3VcKaXpzqRo',
+          cues: '1. Berdiri condong ke depan sangat tipis (±10°), tekuk siku sedikit.\n2. Angkat dumbbell ke samping setinggi bahu seperti menuang air dari teko.\n3. Jangan mengangkat pundak (traps tetap rileks).\n4. Turunkan perlahan 3 detik tanpa mengayun tubuh.',
+          mistakes: 'Mengayun pinggang/lutut untuk melempar beban, mengangkat beban melampaui tinggi bahu.',
+        }),
+        ex('Bicep Curl', 3, 10, 12, 10, 10, {
+          target: 'Lengan Depan (Biceps Brachii)',
+          media: 'https://images.unsplash.com/photo-1581009137042-c552e485697a?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/ykJmrZ5v0Oo',
+          cues: '1. Kunci siku menempel erat di samping pinggang.\n2. Putar pergelangan tangan menghadap ke atas (supinasi) saat mengangkat.\n3. Peras kontraksi bicep di posisi puncak selama 1 detik.\n4. Turunkan beban perlahan sampai lengan hampir lurus sempurna.',
+          mistakes: 'Mengayunkan badan dan memajukan siku ke depan untuk meringankan beban.',
+        }),
+        ex('Overhead Triceps Extension', 3, 10, 12, 10, 15, {
+          target: 'Lengan Belakang (Triceps - Long Head)',
+          media: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/nRiJVZDpdL0',
+          cues: '1. Pegang 1 dumbbell dengan kedua tangan membentuk mangkuk di bawah piringan beban.\n2. Angkat dumbbell ke atas kepala, jaga siku tetap rapat mengarah ke depan.\n3. Tekuk siku ke belakang kepala sampai triceps teregang maksimal.\n4. Dorong kembali ke atas menggunakan kekuatan triceps.',
+          mistakes: 'Siku melebar ke samping kiri-kanan, leher menunduk tertekan.',
+        }),
+      ]},
+      lowerA: { name: 'Lower A', focus: 'Paha, glute, betis, core', exercises: [
+        ex('Goblet Squat', 4, 10, 12, 15, 20, {
+          target: 'Paha Depan (Quadriceps), Glutes, Core',
+          media: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/MeIiIdhvXT4',
+          cues: '1. Pegang 1 dumbbell vertikal menempel erat di depan dada.\n2. Buka kaki selebar bahu, jari kaki mengarah ke luar 20-30°.\n3. Dorong pinggul ke belakang dan tekuk lutut hingga paha minimal sejajar lantai.\n4. Dada tetap tegak membidang, dorong lantai melalui seluruh telapak kaki saat bangkit.',
+          mistakes: 'Lutut menekuk ke dalam (knee valgus), tumit terangkat dari lantai.',
+        }),
+        ex('Romanian Deadlift', 4, 10, 12, 15, 20, {
+          target: 'Paha Belakang (Hamstrings), Bokong (Glutes), Punggung Bawah',
+          media: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/jey_CzKn3mw',
+          cues: '1. Berdiri tegak, pegang kedua dumbbell di depan paha.\n2. Kunci sudut lutut (hanya ditekuk sangat sedikit/micro-bend).\n3. Dorong pinggul ke belakang sejauh mungkin (hip hinge) sambil meluncurkan dumbbell di sepanjang tulang kering.\n4. Rasakan regangan kuat di hamstring, dorong pinggul maju ke depan untuk berdiri.',
+          mistakes: 'Punggung membungkuk melengkung, menekuk lutut terlalu banyak seperti squat biasa.',
+        }),
+        ex('Bulgarian Split Squat', 3, 8, 10, 8, 10, {
+          perSide: 'kaki',
+          target: 'Paha Depan, Gluteus Medius, Keseimbangan Kaki',
+          media: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/2C-uNgKwPLE',
+          cues: '1. Letakkan punggung kaki belakang di atas kursi/bangku setinggi lutut.\n2. Langkahkan kaki depan cukup jauh ke depan.\n3. Turunkan pinggul tegak lurus sampai lutut belakang hampir menyentuh lantai.\n4. Dorong tubuh naik menggunakan tumit kaki depan.',
+          mistakes: 'Langkah kaki depan terlalu pendek sehingga tumit terangkat, badan terlalu miring.',
+        }),
+        ex('Calf Raises', 4, 15, 20, 10, 15, {
+          target: 'Otot Betis (Gastrocnemius & Soleus)',
+          media: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/gwLzBJYoWlI',
+          cues: '1. Berdiri tegak dengan dumbbell di kedua tangan.\n2. Jinjit setinggi mungkin menggunakan pangkal ibu jari kaki.\n3. Tahan kontraksi di puncak gerakan selama 1-2 detik.\n4. Turun perlahan dengan peregangan penuh.',
+          mistakes: 'Memantulkan gerakan (bouncing) tanpa menahan di posisi puncak.',
+        }),
+        ex('Weighted Sit-up', 3, 15, 15, 6, 8, {
+          target: 'Otot Perut (Rectus Abdominis, Core)',
+          media: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/1fbU_MkV7NE',
+          cues: '1. Berbaring telentang dengan lutut ditekuk, peluk dumbbell di depan dada.\n2. Tarik pusar ke dalam dan gulung badan ke atas menggunakan otot perut.\n3. Hembuskan napas saat naik, jangan menyentak leher.\n4. Turunkan punggung ruas demi ruas dengan kontrol.',
+          mistakes: 'Menarik leher dengan tangan, melempar dumbbell menjauhi dada demi momentum.',
+        }),
+      ]},
+      upperB: { name: 'Upper B', focus: 'Dada, punggung, bahu, trap, lengan', exercises: [
+        ex('Floor Press Neutral Grip', 4, 10, 12, 15, 20, {
+          target: 'Dada Tengah, Triceps, Ramah Sendi Bahu',
+          media: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/uUGDRwge4F8',
+          cues: '1. Berbaring di lantai, posisikan telapak tangan saling berhadapan (neutral grip).\n2. Sangat aman dan nyaman bagi sendi bahu.\n3. Dorong beban vertikal ke atas lurus dengan dada.\n4. Turunkan perlahan hingga lengan atas menyentuh lantai.',
+          mistakes: 'Menghentak siku ke lantai, kehilangan kestabilan dumbbell.',
+        }),
+        ex('Bent-Over Row', 4, 10, 12, 15, 15, {
+          target: 'Punggung Atas, Latissimus, Rhomboid',
+          media: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/6TSz8ZTMB4E',
+          cues: '1. Bungkukkan badan 45° dengan pinggul terdorong ke belakang dan dada tegap.\n2. Tarik kedua dumbbell mengarah ke pinggul bawah.\n3. Rapatkan otot belikat di puncak gerakan selama 1 detik.\n4. Turunkan perlahan sampai punggung terasa meregang.',
+          mistakes: 'Punggung membungkuk membulat (round spine), badan mengayun naik-turun.',
+        }),
+        ex('Arnold Press', 3, 10, 12, 10, 10, {
+          target: 'Seluruh Bagian Bahu (Anterior, Lateral, Posterior Deltoid)',
+          media: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/3ml7BH7mNwQ',
+          cues: '1. Mulai dengan dumbbell di depan dada, telapak tangan menghadap wajah.\n2. Saat mendorong ke atas, putar pergelangan tangan ke arah luar secara mulus.\n3. Di posisi puncak atas kepala, telapak tangan menghadap ke depan.\n4. Putar balik saat menurunkan beban ke posisi awal.',
+          mistakes: 'Memutar pergelangan terburu-buru sebelum dumbbell naik, pinggang melengkung.',
+        }),
+        ex('Shrugs', 3, 12, 15, 15, 20, {
+          target: 'Otot Trapezius Atas (Pundak)',
+          media: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/cJRVVxmytaM',
+          cues: '1. Berdiri tegap dengan dumbbell di samping paha.\n2. Angkat pundak lurus ke atas ke arah daun telinga setinggi mungkin.\n3. Tahan kontraksi 1-2 detik di atas.\n4. Turunkan lurus ke bawah tanpa memutar sendi bahu.',
+          mistakes: 'Memutar bahu memutar (shoulder rolling — berisiko merusak sendi bahu).',
+        }),
+        ex('Hammer Curl', 3, 10, 12, 10, 10, {
+          target: 'Brachialis, Lengan Bawah (Forearms), Biceps',
+          media: 'https://images.unsplash.com/photo-1581009137042-c552e485697a?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/zC3nLlEvin4',
+          cues: '1. Pegang dumbbell dengan telapak tangan saling berhadapan (seperti memegang palu).\n2. Angkat beban tanpa memutar tangan, rasakan ketebalan otot lengan samping.\n3. Tahan 1 detik di puncak kontraksi.\n4. Turunkan terkontrol sampai lengan hampir lurus.',
+          mistakes: 'Mengayun pinggul dan siku bergerak maju mundur.',
+        }),
+        ex('Kickbacks', 3, 12, 12, 6, 8, {
+          target: 'Triceps (Puncak Kontraksi Lateral & Medial Head)',
+          media: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/6SS6KT27HBk',
+          cues: '1. Bungkukkan badan 45°, angkat siku tinggi sejajar rusuk dada.\n2. Kunci posisi siku agar tidak turun, luruskan lengan bawah ke belakang.\n3. Kunci triceps di belakang selama 1-2 detik.\n4. Tekuk lengan bawah kembali perlahan.',
+          mistakes: 'Menurunkan posisi siku, mengayunkan beban seperti pendulum.',
+        }),
+      ]},
+      lowerB: { name: 'Lower B', focus: 'Paha, glute, hamstring, core', exercises: [
+        ex('Walking Lunges', 3, 10, 10, 10, 10, {
+          perSide: 'kaki',
+          target: 'Quadriceps, Glutes, Hamstrings, Keseimbangan',
+          media: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/L8fvypPrzzs',
+          cues: '1. Pegang dumbbell di samping paha, langkahkan satu kaki ke depan.\n2. Turunkan pinggul hingga kedua lutut membentuk sudut 90°.\n3. Dorong melalui tumit kaki depan dan langkahkan kaki belakang langsung maju ke depan.\n4. Postur badan tetap tegak dan pandangan lurus ke depan.',
+          mistakes: 'Lutut depan terdorong terlalu jauh melebihi ujung jari kaki, tubuh miring.',
+        }),
+        ex('Sumo Squat', 4, 10, 12, 15, 20, {
+          target: 'Paha Bagian Dalam (Adductors), Gluteus Maximus',
+          media: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/9ZuXKqRbT9k',
+          cues: '1. Buka kaki lebar (1,5x lebar bahu), putar jari kaki ke luar 45°.\n2. Pegang 1 dumbbell berat dengan kedua tangan menjuntai di tengah.\n3. Turun jongkok dengan menjaga lutut terbuka lebar searah jari kaki.\n4. Remas otot bokong dan paha dalam saat bangkit berdiri.',
+          mistakes: 'Lutut menekuk ke dalam saat turun, punggung terlalu membungkuk.',
+        }),
+        ex('Single-Leg RDL', 3, 8, 8, 10, 10, {
+          perSide: 'kaki',
+          target: 'Hamstring Kaki Tumpu, Gluteus Medius, Keseimbangan',
+          media: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/i_XzJ7l6yQY',
+          cues: '1. Berdiri di satu kaki (lutut ditekuk tipis), pegang dumbbell di tangan berlawanan.\n2. Angkat kaki satunya lurus ke belakang bersamaan dengan badan condong ke depan.\n3. Jaga pinggul tetap rata sejajar lantai (jangan memutar pinggul ke samping).\n4. Tarik kembali dengan meremas hamstring kaki tumpu.',
+          mistakes: 'Pinggul miring terbuka ke samping, kehilangan kestabilan karena terlalu cepat.',
+        }),
+        ex('Calf Raises', 4, 15, 20, 15, 15, {
+          target: 'Otot Betis (Gastrocnemius & Soleus)',
+          media: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/gwLzBJYoWlI',
+          cues: '1. Jinjit setinggi mungkin, jeda 2 detik di puncak.\n2. Turun perlahan dengan tempo 3 detik.',
+          mistakes: 'Gerakan memantul tanpa kontraksi puncak.',
+        }),
+        ex('Plank with Shoulder Tap', 3, 30, 45, 0, 0, {
+          unit: 'detik',
+          target: 'Core Anti-Rotasi, Stabilitas Bahu & Perut',
+          media: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=80',
+          video: 'https://www.youtube.com/embed/0_m3T_Pq5C0',
+          cues: '1. Posisi push-up plank dengan tangan di bawah bahu dan kaki sedikit melebar.\n2. Kunci otot perut dan pantat sekuat mungkin.\n3. Sentuh bahu kiri dengan tangan kanan secara perlahan tanpa menggoyangkan pinggul.\n4. Kembalikan tangan dan lakukan bergantian.',
+          mistakes: 'Pinggul bergoyang ke kiri dan kanan (pinggul harus tetap diam kokoh).',
+        }),
+      ]},
+    },
+  };
+}
+
+const PALETTE = {
+  light: { text: '#69718a', grid: 'rgba(100,110,140,.14)', primary: [108,76,240], cyan: [14,165,233], ok: [16,185,129], warn: [245,158,11], bad: [239,68,68], pink: [236,72,153] },
+  dark:  { text: '#959cba', grid: 'rgba(160,170,210,.12)', primary: [139,114,255], cyan: [56,189,248], ok: [52,211,153], warn: [251,191,36], bad: [248,113,113], pink: [244,114,182] },
+};
+
+/* =========================================================
+   2. UTILITAS
+   ========================================================= */
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+let _uidCounter = 0;
+function uid() { return Date.now().toString(36) + (_uidCounter++).toString(36) + Math.random().toString(36).slice(2, 6); }
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad = n => String(n).padStart(2, '0');
+const toDateStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => toDateStr(new Date());
+const addDays = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return toDateStr(d); };
+const daysBetween = (a, b) => Math.round((parseDate(b) - parseDate(a)) / 86400000);
+const weekStart = s => { const d = parseDate(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return toDateStr(d); };
+const num = (v, def = 0) => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : def; };
+const round1 = n => Math.round(n * 10) / 10;
+const fmtNum = (n, dec = 0) => Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: dec });
+const fmtRp = n => 'Rp' + Math.round(n || 0).toLocaleString('id-ID');
+const fmtRpShort = n => n >= 1000 ? 'Rp' + fmtNum(n / 1000, 1) + 'rb' : fmtRp(n);
+const fmtDateLong = s => { const d = parseDate(s); return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtDateShort = s => { const d = parseDate(s); return `${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`; };
+const fmtDateDay = s => { const d = parseDate(s); return `${DAY_NAMES[d.getDay()].slice(0, 3)}, ${d.getDate()} ${MONTH_SHORT[d.getMonth()]}`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const formData = f => Object.fromEntries(new FormData(f).entries());
+const rgba = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+function seededRandom(seed) { return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+
+/* =========================================================
+   3. PENYIMPANAN & STATE
+   ========================================================= */
+function createDefaultState() {
+  return {
+    version: 1,
+    settings: clone(DEFAULT_SETTINGS),
+    foods: clone(DEFAULT_FOODS),
+    template: clone(DEFAULT_TEMPLATE),
+    program: createDefaultProgram(),
+    meals: {},
+    sessions: {},
+    bodyLogs: [],
+    sampleLoaded: false,
+  };
+}
+
+function normalizeState(raw) {
+  const base = createDefaultState();
+  if (!raw || typeof raw !== 'object') return base;
+  const obj = v => v && typeof v === 'object' && !Array.isArray(v);
+  const cloud = { ...base.settings.cloud, ...(obj(raw.settings?.cloud) ? raw.settings.cloud : {}) };
+  return {
+    ...base,
+    sampleLoaded: !!raw.sampleLoaded,
+    settings: { ...base.settings, ...(obj(raw.settings) ? raw.settings : {}), cloud },
+    foods: Array.isArray(raw.foods) ? raw.foods : base.foods,
+    template: obj(raw.template) ? { ...base.template, ...raw.template } : base.template,
+    program: obj(raw.program) && obj(raw.program.workouts)
+      ? { schedule: { ...base.program.schedule, ...(raw.program.schedule || {}) }, workouts: raw.program.workouts }
+      : base.program,
+    meals: obj(raw.meals) ? raw.meals : {},
+    sessions: obj(raw.sessions) ? raw.sessions : {},
+    bodyLogs: Array.isArray(raw.bodyLogs) ? raw.bodyLogs : [],
+  };
+}
+
+/** LocalStorage & Cloud Auto-Sync */
+const Store = {
+  load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.error('Gagal membaca localStorage:', err);
+      setTimeout(() => toast('Gagal membaca data tersimpan. Memulai dengan data baru.', 'bad'), 300);
+      return null;
+    }
+  },
+  saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (err) {
+      console.error('Gagal menyimpan localStorage:', err);
+      toast('Gagal menyimpan data (penyimpanan penuh/diblokir).', 'bad');
+      return false;
+    }
+  },
+  size() {
+    try { return (localStorage.getItem(STORAGE_KEY) || '').length; } catch (err) { return 0; }
+  },
+};
+
+function save() {
+  const ok = Store.saveLocal();
+  if (state.settings?.cloud?.enabled && state.settings?.cloud?.autoSync) {
+    clearTimeout(Cloud._debounceTimer);
+    Cloud._debounceTimer = setTimeout(() => {
+      Cloud.push();
+    }, 1200);
+  }
+  return ok;
+}
+
+let state = createDefaultState();
+
+const ui = {
+  page: 'dashboard',
+  mealDate: todayStr(),
+  gymDate: todayStr(),
+  mealTab: 'log',
+  gymTab: 'sesi',
+  chartRange: 14,
+  chartExercise: null,
+  gymOverride: {},
+  draft: null,
+  addSlot: 'pagi',
+  foodFormFromAdd: false,
+  modalOnClose: null,
+};
+
+/* =========================================================
+   4. CLOUD SYNC (SUPABASE & FIREBASE)
+   ========================================================= */
+const Cloud = {
+  client: null,
+  status: 'offline', // 'offline' | 'ready' | 'syncing' | 'error'
+  statusMsg: 'Lokal',
+  _debounceTimer: null,
+
+  init() {
+    this.setupClient();
+    if (state.settings?.cloud?.enabled && state.settings?.cloud?.autoSync) {
+      this.pull({ silent: true });
+    }
+  },
+
+  setupClient() {
+    const c = state.settings.cloud;
+    if (!c || !c.enabled) {
+      this.client = null;
+      this.status = 'offline';
+      this.statusMsg = 'Lokal';
+      this.updateBadge();
+      return;
+    }
+
+    if (c.provider === 'supabase') {
+      if (typeof window.supabase !== 'undefined' && c.supabaseUrl && c.supabaseKey) {
+        try {
+          this.client = window.supabase.createClient(c.supabaseUrl.trim(), c.supabaseKey.trim());
+          this.status = 'ready';
+          this.statusMsg = 'Supabase Aktif';
+        } catch (e) {
+          console.error('Supabase init error:', e);
+          this.status = 'error';
+          this.statusMsg = 'Gagal Supabase';
+        }
+      } else {
+        this.status = 'offline';
+        this.statusMsg = 'Supabase belum lengkap';
+      }
+    } else if (c.provider === 'firebase') {
+      if (typeof window.firebase !== 'undefined' && c.firebaseConfig) {
+        try {
+          let conf = c.firebaseConfig;
+          if (typeof conf === 'string' && conf.trim().startsWith('{')) {
+            conf = JSON.parse(conf);
+          } else if (typeof conf === 'string') {
+            conf = { databaseURL: conf.trim() };
+          }
+          if (!window.firebase.apps.length) {
+            window.firebase.initializeApp(conf);
+          }
+          this.client = window.firebase.database();
+          this.status = 'ready';
+          this.statusMsg = 'Firebase Aktif';
+        } catch (e) {
+          console.error('Firebase init error:', e);
+          this.status = 'error';
+          this.statusMsg = 'Gagal Firebase';
+        }
+      } else {
+        this.status = 'offline';
+        this.statusMsg = 'Firebase belum lengkap';
+      }
+    }
+    this.updateBadge();
+  },
+
+  updateBadge() {
+    const txt = $('#syncStatusText');
+    const badge = $('#syncStatusBadge');
+    if (!txt || !badge) return;
+    txt.textContent = this.statusMsg;
+    badge.className = 'sync-pill ' + (
+      this.status === 'ready' ? 'sync-ok' :
+      this.status === 'syncing' ? 'sync-busy' :
+      this.status === 'error' ? 'sync-err' : 'sync-off'
+    );
+  },
+
+  async push({ manual = false } = {}) {
+    const c = state.settings.cloud;
+    if (!this.client || !c?.enabled) {
+      if (manual) toast('Cloud belum diaktifkan atau belum lengkap', 'warn');
+      return;
+    }
+    const syncKey = (c.syncKey || 'default_user').trim();
+    this.status = 'syncing';
+    this.statusMsg = 'Menyimpan...';
+    this.updateBadge();
+
+    try {
+      const payload = {
+        app: 'OtotKu',
+        updatedAt: new Date().toISOString(),
+        version: state.version || 1,
+        settings: state.settings,
+        foods: state.foods,
+        template: state.template,
+        program: state.program,
+        meals: state.meals,
+        sessions: state.sessions,
+        bodyLogs: state.bodyLogs,
+      };
+
+      if (c.provider === 'supabase') {
+        const { error } = await this.client
+          .from('ototku_sync')
+          .upsert({ user_id: syncKey, data: payload, updated_at: new Date().toISOString() });
+        if (error) throw error;
+      } else if (c.provider === 'firebase') {
+        await this.client.ref('ototku/' + syncKey).set(payload);
+      }
+
+      c.lastSyncedAt = new Date().toISOString();
+      Store.saveLocal();
+      this.status = 'ready';
+      this.statusMsg = 'Tersimpan';
+      this.updateBadge();
+      if (manual) toast('☁️ Data berhasil disimpan ke Cloud!', 'ok');
+    } catch (err) {
+      console.error('Cloud Push error:', err);
+      this.status = 'error';
+      this.statusMsg = 'Gagal Sync';
+      this.updateBadge();
+      if (manual) toast('Gagal simpan ke Cloud: ' + (err.message || err), 'bad');
+    }
+  },
+
+  async pull({ manual = false, silent = false } = {}) {
+    const c = state.settings.cloud;
+    if (!this.client || !c?.enabled) {
+      if (manual) toast('Cloud belum diaktifkan atau belum lengkap', 'warn');
+      return;
+    }
+    const syncKey = (c.syncKey || 'default_user').trim();
+    this.status = 'syncing';
+    this.statusMsg = 'Mengunduh...';
+    this.updateBadge();
+
+    try {
+      let cloudData = null;
+      if (c.provider === 'supabase') {
+        const { data, error } = await this.client
+          .from('ototku_sync')
+          .select('data, updated_at')
+          .eq('user_id', syncKey)
+          .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        cloudData = data ? data.data : null;
+      } else if (c.provider === 'firebase') {
+        const snap = await this.client.ref('ototku/' + syncKey).once('value');
+        cloudData = snap.val();
+      }
+
+      if (cloudData) {
+        const currentCloudConf = clone(state.settings.cloud);
+        state = normalizeState(cloudData);
+        state.settings.cloud = currentCloudConf;
+        state.settings.cloud.lastSyncedAt = new Date().toISOString();
+        Store.saveLocal();
+        this.status = 'ready';
+        this.statusMsg = 'Tersinkron';
+        this.updateBadge();
+        renderCurrent();
+        if (!silent) toast('☁️ Data Cloud berhasil disinkronkan!', 'ok');
+      } else {
+        this.status = 'ready';
+        this.statusMsg = 'Cloud Siap';
+        this.updateBadge();
+        await this.push();
+        if (!silent) toast('Cloud baru dihubungkan, data lokal berhasil diunggah!', 'ok');
+      }
+    } catch (err) {
+      console.error('Cloud Pull error:', err);
+      this.status = 'error';
+      this.statusMsg = 'Gagal Sync';
+      this.updateBadge();
+      if (!silent) toast('Gagal mengambil data Cloud: ' + (err.message || err), 'bad');
+    }
+  }
+};
+
+/* =========================================================
+   5. DATA CONTOH
+   ========================================================= */
+function generateSampleData() {
+  const rnd = seededRandom(20261023);
+  const today = todayStr();
+  const notes = ['Energi bagus, tidur 7 jam.', 'Agak capek, tapi semua set selesai.', 'Fokus form & tempo pelan.', 'Pump mantap! 💪'];
+
+  for (let i = SAMPLE_DAYS; i >= 1; i--) {
+    const date = addDays(today, -i);
+
+    if (!(state.meals[date] && state.meals[date].length)) {
+      const entries = [];
+      MEAL_SLOTS.forEach(sl => (state.template[sl.id] || []).forEach(t => {
+        const f = findFood(t.foodId);
+        if (f) entries.push(makeMealEntry(f, sl.id, t.qty, true));
+      }));
+      const r = rnd(), egg = findFood('telur'), tempe = findFood('tempe');
+      if (r < 0.4 && egg) entries.push(makeMealEntry(egg, 'malam', 1, true));
+      else if (r < 0.65 && tempe) entries.push(makeMealEntry(tempe, 'sore', 1, true));
+      else if (r > 0.85 && entries[0]) entries[0].qty = Math.max(1, entries[0].qty - 1);
+      state.meals[date] = entries;
+    }
+
+    const wid = state.program.schedule[parseDate(date).getDay()];
+    if (state.program.workouts[wid] && !state.sessions[date]) {
+      const s = buildSession(wid, date);
+      s.sample = true;
+      s.completed = true;
+      s.notes = notes[Math.floor(rnd() * notes.length)];
+      s.entries.forEach(en => {
+        const hitTop = rnd() < 0.35;
+        en.sets.forEach((st, k) => {
+          let reps = en.repMin + Math.floor(rnd() * (en.repMax - en.repMin + 1));
+          if (hitTop) reps = en.repMax;
+          else if (k === en.sets.length - 1) reps = Math.min(reps, en.repMax - 1);
+          st.done = true; st.reps = reps; st.weight = en.wMin;
+        });
+      });
+      state.sessions[date] = s;
+    }
+  }
+
+  [[-22, 54.2, 27.8, 84.0, 48.0], [-15, 54.5, 28.0, 84.5, 48.3], [-8, 54.7, 28.1, 84.8, 48.5], [-1, 55.0, 28.3, 85.2, 48.8]]
+    .forEach(([d, w, a, c, t]) => {
+      const date = addDays(today, d);
+      if (!state.bodyLogs.some(l => l.date === date))
+        state.bodyLogs.push({ id: uid(), date, weight: w, arm: a, chest: c, thigh: t, sample: true });
+    });
+
+  state.sampleLoaded = true;
+}
+
+function hasSampleData() {
+  return Object.values(state.meals).some(l => l.some(e => e.sample)) ||
+         Object.values(state.sessions).some(s => s.sample) ||
+         state.bodyLogs.some(l => l.sample);
+}
+
+function removeSampleData() {
+  Object.keys(state.meals).forEach(d => {
+    state.meals[d] = state.meals[d].filter(e => !e.sample);
+    if (!state.meals[d].length) delete state.meals[d];
+  });
+  Object.keys(state.sessions).forEach(d => { if (state.sessions[d].sample) delete state.sessions[d]; });
+  state.bodyLogs = state.bodyLogs.filter(l => !l.sample);
+  state.sampleLoaded = false;
+  ui.draft = null;
+  save();
+}
+
+/* =========================================================
+   6. PERHITUNGAN NUTRISI, PROGRESSIVE OVERLOAD & SESI
+   ========================================================= */
+const findFood = id => state.foods.find(f => f.id === id);
+const foodPrice = f => (f.priceMax && num(f.priceMax) > 0) ? (num(f.priceMin) + num(f.priceMax)) / 2 : num(f.priceMin);
+const foodPriceText = f => (f.priceMax && num(f.priceMax) !== num(f.priceMin) && num(f.priceMax) > 0)
+  ? `${fmtRp(f.priceMin)}–${Math.round(num(f.priceMax)).toLocaleString('id-ID')}` : fmtRp(f.priceMin);
+
+function makeMealEntry(food, slot, qty = 1, sample = false) {
+  const e = { id: uid(), foodId: food.id, name: food.name, portion: food.portion,
+    protein: num(food.protein), kcal: num(food.kcal), satFat: num(food.satFat), price: foodPrice(food), slot, qty };
+  if (sample) e.sample = true;
+  return e;
+}
+
+function sumEntries(list) {
+  return list.reduce((t, e) => {
+    t.protein += e.protein * e.qty; t.kcal += e.kcal * e.qty;
+    t.satFat += e.satFat * e.qty;   t.cost += e.price * e.qty;
+    return t;
+  }, { protein: 0, kcal: 0, satFat: 0, cost: 0 });
+}
+const dayTotals = date => sumEntries(state.meals[date] || []);
+const hasMeals = date => (state.meals[date] || []).length > 0;
+
+function rangeTotals(start, end) {
+  const t = { protein: 0, kcal: 0, satFat: 0, cost: 0, days: 0 };
+  Object.keys(state.meals).forEach(d => {
+    if (d >= start && d <= end && state.meals[d].length) {
+      const x = dayTotals(d);
+      t.protein += x.protein; t.kcal += x.kcal; t.satFat += x.satFat; t.cost += x.cost; t.days++;
+    }
+  });
+  return t;
+}
+
+const statusProtein = v => v >= state.settings.proteinMin ? 'ok' : 'warn';
+const statusKcal = v => v >= state.settings.calorieTarget * 0.9 ? 'ok' : 'warn';
+const statusLimit = (v, limit) => v > limit ? 'bad' : 'ok';
+
+function proteinStreak() {
+  const min = state.settings.proteinMin;
+  let d = todayStr(), count = 0;
+  if (dayTotals(d).protein < min) d = addDays(d, -1);
+  while (dayTotals(d).protein >= min) { count++; d = addDays(d, -1); }
+  return count;
+}
+function bestProteinStreak() {
+  const min = state.settings.proteinMin;
+  const dates = Object.keys(state.meals).filter(d => dayTotals(d).protein >= min).sort();
+  let best = 0, cur = 0, prev = null;
+  dates.forEach(d => { cur = (prev && addDays(prev, 1) === d) ? cur + 1 : 1; best = Math.max(best, cur); prev = d; });
+  return best;
+}
+
+const completedSessions = () => Object.entries(state.sessions).filter(([, s]) => s.completed);
+const sessionsInWeek = ws => { const we = addDays(ws, 6); return completedSessions().filter(([d]) => d >= ws && d <= we).length; };
+const weeklySessionTarget = () => Object.values(state.program.schedule).filter(id => state.program.workouts[id]).length || 4;
+const sortedDumbbells = () => [...state.settings.dumbbells].sort((a, b) => a - b);
+
+function sessionProgress(sess) {
+  let done = 0, total = 0;
+  sess.entries.forEach(e => e.sets.forEach(s => { total++; if (s.done) done++; }));
+  return { done, total };
+}
+
+function getWorkoutForDate(date) {
+  if (state.sessions[date]) return state.sessions[date].workoutId;
+  if (ui.gymOverride[date]) return ui.gymOverride[date];
+  return state.program.schedule[parseDate(date).getDay()] || 'rest';
+}
+
+function findPrevEntry(date, exId, name) {
+  const dates = Object.keys(state.sessions).filter(d => d < date).sort().reverse();
+  const lname = (name || '').toLowerCase();
+  for (const d of dates) {
+    const s = state.sessions[d];
+    const entry = s.entries.find(e => e.exId === exId && e.sets.some(x => x.done)) ||
+                  s.entries.find(e => e.name.toLowerCase() === lname && e.sets.some(x => x.done));
+    if (entry) return { date: d, entry };
+  }
+  return null;
+}
+
+function overloadSuggestion(prev, ex) {
+  if (!prev) return null;
+  const sets = prev.entry.sets;
+  const allTop = sets.length > 0 && sets.every(s => s.done && num(s.reps) >= ex.repMax);
+  if (!allTop) return null;
+  if (ex.unit === 'detik')
+    return { title: 'Tingkatkan durasi', text: `Semua set mencapai ${ex.repMax} detik. Tambah 5–10 detik atau gunakan variasi lebih sulit.` };
+  const maxW = Math.max(...sets.map(s => num(s.weight)));
+  const next = sortedDumbbells().find(w => w > maxW);
+  if (next == null)
+    return { title: 'Beban maksimal tercapai', text: `Semua set ${ex.repMax} rep dengan ${maxW} kg. Tambah 1 set, perlambat tempo (3 detik turun), atau jeda 1 detik di posisi tersulit.` };
+  return { title: `Naikkan beban: ${maxW} → ${next} kg`, text: `Semua set sesi lalu mencapai ${ex.repMax} rep. Mulai dari ${ex.repMin} rep dengan beban baru.`, weight: next };
+}
+
+function buildSession(workoutId, date) {
+  const w = state.program.workouts[workoutId];
+  return {
+    workoutId, workoutName: w.name, completed: false, notes: '',
+    entries: w.exercises.map(e => {
+      const prev = findPrevEntry(date, e.id, e.name);
+      const sug = overloadSuggestion(prev, e);
+      const prevW = prev ? Math.max(...prev.entry.sets.map(s => num(s.weight))) : null;
+      const weight = sug && sug.weight ? sug.weight : (prevW != null ? prevW : e.wMin);
+      return {
+        exId: e.id, name: e.name, unit: e.unit, perSide: e.perSide,
+        repMin: e.repMin, repMax: e.repMax, wMin: e.wMin, wMax: e.wMax, note: '',
+        target: e.target || '', media: e.media || '', video: e.video || '',
+        cues: e.cues || '', mistakes: e.mistakes || '',
+        sets: Array.from({ length: e.sets }, () => ({ done: false, reps: '', weight })),
+      };
+    }),
+  };
+}
+
+function getSessionView(date) {
+  if (state.sessions[date]) return state.sessions[date];
+  const wid = getWorkoutForDate(date);
+  if (!state.program.workouts[wid]) return null;
+  if (!ui.draft || ui.draft._date !== date || ui.draft.workoutId !== wid) {
+    ui.draft = buildSession(wid, date);
+    ui.draft._date = date;
+  }
+  return ui.draft;
+}
+
+function commitSession(date) {
+  if (!state.sessions[date] && ui.draft && ui.draft._date === date) {
+    const s = ui.draft; delete s._date;
+    state.sessions[date] = s;
+    ui.draft = null;
+  }
+  return state.sessions[date];
+}
+
+function nextWorkoutDay(from) {
+  for (let i = 1; i <= 7; i++) {
+    const d = addDays(from, i), id = state.program.schedule[parseDate(d).getDay()];
+    if (state.program.workouts[id]) return { date: d, w: state.program.workouts[id] };
+  }
+  return null;
+}
+
+function targetText(e) {
+  const n = Array.isArray(e.sets) ? e.sets.length : e.sets;
+  const reps = e.repMin === e.repMax ? e.repMin : `${e.repMin}–${e.repMax}`;
+  return `${n}×${reps}${e.unit === 'detik' ? ' detik' : ''}${e.perSide ? '/' + e.perSide : ''}`;
+}
+function weightText(e) {
+  if (!e.wMax) return 'Beban tubuh';
+  return e.wMin === e.wMax ? `${e.wMin} kg` : `${e.wMin}–${e.wMax} kg`;
+}
+
+const sortedLogs = () => [...state.bodyLogs].sort((a, b) => a.date.localeCompare(b.date));
+
+function applyWeight(w, announce = false) {
+  const s = state.settings;
+  s.weight = round1(w);
+  s.proteinMin = Math.round(w * s.proteinFactorMin);
+  s.proteinMax = Math.round(w * s.proteinFactorMax);
+  s.proteinTarget = Math.round(w * s.proteinFactorIdeal);
+  if (announce) toast(`Target protein diperbarui: ${s.proteinMin}–${s.proteinMax} g (ideal ${s.proteinTarget} g)`, 'ok');
+}
+
+function nextMealSlot() {
+  const now = new Date(), h = now.getHours() + now.getMinutes() / 60;
+  const slot = MEAL_SLOTS.find(s => h < s.end);
+  return slot ? { ...slot, isNow: h >= slot.start } : null;
+}
+
+/* =========================================================
+   7. KOMPONEN UI UMUM
+   ========================================================= */
+function toast(msg, type = '', action = null) {
+  const box = $('#toasts');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<span>${msg}</span>`;
+  if (action) {
+    const b = document.createElement('button');
+    b.textContent = action.label;
+    b.onclick = () => { action.fn(); el.remove(); };
+    el.appendChild(b);
+  }
+  box.appendChild(el);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, action ? 4500 : 2600);
+}
+
+function openModal({ title, body, foot = '', onClose = null }) {
+  const m = $('#modal');
+  $('#modalTitle').textContent = title;
+  $('#modalBody').innerHTML = body;
+  $('#modalFoot').innerHTML = foot;
+  ui.modalOnClose = onClose;
+  clearTimeout(ui.modalTimer);
+  m.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('open')));
+}
+function closeModal() {
+  const m = $('#modal');
+  m.classList.remove('open');
+  const cb = ui.modalOnClose; ui.modalOnClose = null;
+  if (cb) cb();
+  clearTimeout(ui.modalTimer);
+  ui.modalTimer = setTimeout(() => { if (!m.classList.contains('open')) m.hidden = true; }, 300);
+}
+function confirmDialog(message, { ok = 'Ya, lanjutkan', danger = false, title = 'Konfirmasi' } = {}) {
+  return new Promise(resolve => {
+    openModal({
+      title,
+      body: `<p style="font-size:.92rem">${message}</p>`,
+      foot: `<button class="btn" id="cfNo" type="button">Batal</button><button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="cfYes" type="button">${ok}</button>`,
+      onClose: () => resolve(false),
+    });
+    $('#cfYes').onclick = () => { ui.modalOnClose = null; closeModal(); resolve(true); };
+    $('#cfNo').onclick = () => closeModal();
+  });
+}
+
+const ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const isDark = () => document.documentElement.dataset.theme === 'dark';
+function applyTheme() {
+  const pref = state.settings.theme;
+  const dark = pref === 'dark' || (pref === 'auto' && darkQuery && darkQuery.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  $('#themeToggle').innerHTML = dark ? ICON_SUN : ICON_MOON;
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? '#0a0c16' : '#f4f5fb';
+}
+
+const Timer = {
+  end: 0, total: 0, interval: null, audio: null, hideT: null,
+  C: 2 * Math.PI * 23,
+  start(sec) {
+    sec = Math.max(5, Math.round(sec));
+    try { if (!this.audio) this.audio = new (window.AudioContext || window.webkitAudioContext)(); if (this.audio.state === 'suspended') this.audio.resume(); } catch (e) { }
+    clearTimeout(this.hideT);
+    this.total = sec; this.end = Date.now() + sec * 1000;
+    const t = $('#timer'); t.classList.add('show'); t.classList.remove('finished');
+    $('#timerTitle').textContent = 'Istirahat';
+    $('#timerSub').textContent = 'Tarik napas, siapkan set berikutnya';
+    clearInterval(this.interval);
+    this.interval = setInterval(() => this.tick(), 250);
+    this.tick();
+  },
+  add(sec) {
+    if (!this.interval) return this.start(Math.max(15, sec));
+    this.end += sec * 1000;
+    this.total = Math.max(5, this.total + sec);
+    this.tick();
+  },
+  stop() { clearInterval(this.interval); this.interval = null; $('#timer').classList.remove('show'); },
+  tick() {
+    const left = Math.max(0, Math.ceil((this.end - Date.now()) / 1000));
+    $('#timerText').textContent = `${Math.floor(left / 60)}:${pad(left % 60)}`;
+    $('#timerProg').style.strokeDashoffset = this.C * (1 - left / this.total);
+    if (left <= 0) this.finish();
+  },
+  finish() {
+    clearInterval(this.interval); this.interval = null;
+    $('#timer').classList.add('finished');
+    $('#timerTitle').textContent = 'Waktu istirahat habis!';
+    $('#timerSub').textContent = 'Lanjut ke set berikutnya 💪';
+    this.beep();
+    try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { }
+    this.hideT = setTimeout(() => this.stop(), 6000);
+  },
+  beep() {
+    try {
+      const ctx = this.audio; if (!ctx) return;
+      [0, 0.25, 0.5].forEach((t, k) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = k === 2 ? 1046 : 880;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.2);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.22);
+      });
+    } catch (e) { }
+  },
+};
+
+function pageHead(title, sub, right = '') {
+  return `<div class="page-head"><div><h2>${title}</h2><p class="muted">${sub}</p></div>${right}</div>`;
+}
+function seg(items, active, action) {
+  return `<div class="seg" role="tablist">${items.map(([v, l]) =>
+    `<button type="button" role="tab" aria-selected="${v === active}" class="${v === active ? 'active' : ''}" data-action="${action}" data-value="${v}" id="${action}-${v}">${l}</button>`).join('')}</div>`;
+}
+function dateNav(date, scope) {
+  const isToday = date === todayStr();
+  return `<div class="date-nav">
+    <button class="btn-icon" data-action="dateShift" data-scope="${scope}" data-dir="-1" id="${scope}Prev" aria-label="Hari sebelumnya">‹</button>
+    <label class="date-display" for="${scope}DateInput">
+      ${isToday ? '<span class="today-tag">Hari ini · </span>' : ''}${fmtDateLong(date)}
+      <input type="date" id="${scope}DateInput" value="${date}" data-change="dateSet" data-scope="${scope}" aria-label="Pilih tanggal">
+    </label>
+    <button class="btn-icon" data-action="dateShift" data-scope="${scope}" data-dir="1" id="${scope}Next" aria-label="Hari berikutnya">›</button>
+    ${isToday ? '' : `<button class="btn btn-sm btn-soft" data-action="dateToday" data-scope="${scope}" id="${scope}Today">Hari ini</button>`}
+  </div>`;
+}
+
+function metricRow({ icon, label, value, target, unit = '', dec = 0, status, chip, note, money = false, marker = null }) {
+  const pct = target > 0 ? Math.min(100, (value / target) * 100) : 0;
+  const v = money ? fmtRp(value) : `${fmtNum(value, dec)} ${unit}`;
+  const t = money ? fmtRp(target) : `${fmtNum(target, dec)} ${unit}`;
+  return `<div class="metric">
+    <div class="metric-head">
+      <span class="metric-label">${icon} ${label} <span class="chip chip-${status}">${chip}</span></span>
+      <span class="metric-val"><b>${v}</b> / ${t}</span>
+    </div>
+    <div class="bar bar-${status}"><div class="bar-fill" style="width:${pct}%"></div>${marker != null ? `<span class="bar-marker" style="left:${marker}%"></span>` : ''}</div>
+    ${note ? `<div class="metric-sub">${note}</div>` : ''}
+  </div>`;
+}
+
+function dailySummaryHtml(date, { withProtein = true } = {}) {
+  const s = state.settings, t = dayTotals(date);
+  const pS = statusProtein(t.protein), kS = statusKcal(t.kcal), fS = statusLimit(t.satFat, s.satFatLimit), cS = statusLimit(t.cost, s.budget);
+  let pNote;
+  if (t.protein < s.proteinMin) pNote = `Kurang ${fmtNum(s.proteinMin - t.protein, 1)} g menuju batas minimal ${s.proteinMin} g`;
+  else if (t.protein < s.proteinTarget) pNote = `Dalam rentang ${s.proteinMin}–${s.proteinMax} g · ${fmtNum(s.proteinTarget - t.protein, 1)} g lagi menuju ideal`;
+  else if (t.protein <= s.proteinMax) pNote = 'Target ideal tercapai 🎉';
+  else pNote = `Di atas rentang (${s.proteinMax} g) — tidak masalah sesekali`;
+  return `
+    ${withProtein ? metricRow({ icon: '🥚', label: 'Protein', value: t.protein, target: s.proteinTarget, unit: 'g', dec: 1, status: pS,
+      chip: pS === 'ok' ? 'Tercapai' : 'Kurang', note: pNote, marker: Math.min(100, s.proteinMin / s.proteinTarget * 100) }) : ''}
+    ${metricRow({ icon: '🔥', label: 'Kalori', value: t.kcal, target: s.calorieTarget, unit: 'kkal', status: kS, chip: kS === 'ok' ? 'Tercapai' : 'Kurang',
+      note: t.kcal <= s.calorieTarget ? `Sisa ${fmtNum(s.calorieTarget - t.kcal)} kkal` : `Lebih ${fmtNum(t.kcal - s.calorieTarget)} kkal dari target` })}
+    ${metricRow({ icon: '🧈', label: 'Lemak jenuh', value: t.satFat, target: s.satFatLimit, unit: 'g', dec: 1, status: fS, chip: fS === 'ok' ? 'Aman' : 'Melebihi',
+      note: fS === 'ok' ? `Sisa ${fmtNum(s.satFatLimit - t.satFat, 1)} g dari batas` : `Melebihi batas ${fmtNum(t.satFat - s.satFatLimit, 1)} g` })}
+    ${metricRow({ icon: '💰', label: 'Biaya', value: t.cost, target: s.budget, money: true, status: cS, chip: cS === 'ok' ? 'Sesuai' : 'Over',
+      note: cS === 'ok' ? `Sisa anggaran ${fmtRp(s.budget - t.cost)}` : `Melebihi anggaran ${fmtRp(t.cost - s.budget)}` })}`;
+}
+
+/* =========================================================
+   8. HALAMAN
+   ========================================================= */
+
+/* ---------- 8a. DASHBOARD ---------- */
+function renderDashboard() {
+  const s = state.settings, today = todayStr(), t = dayTotals(today);
+  const pct = s.proteinTarget ? Math.min(1, t.protein / s.proteinTarget) : 0;
+  const left = Math.max(0, s.proteinTarget - t.protein);
+  const C = 2 * Math.PI * 50;
+  const h = new Date().getHours();
+  const greet = h < 11 ? 'Selamat pagi' : h < 15 ? 'Selamat siang' : h < 18 ? 'Selamat sore' : 'Selamat malam';
+
+  const wid = getWorkoutForDate(today), w = state.program.workouts[wid], sess = state.sessions[today];
+  let workoutHtml;
+  if (w) {
+    let status = 'Belum dimulai', cls = 'chip-muted';
+    if (sess) {
+      const p = sessionProgress(sess);
+      if (sess.completed) { status = 'Selesai ✓'; cls = 'chip-ok'; }
+      else if (p.done) { status = `${p.done}/${p.total} set`; cls = 'chip-warn'; }
+    }
+    const list = sess ? sess.entries : w.exercises;
+    workoutHtml = `
+      <div class="card-head"><div><h3 class="card-title">🏋️ Latihan hari ini</h3><p class="muted small">${esc(w.name)} · ${esc(w.focus || '')}</p></div><span class="chip ${cls}">${status}</span></div>
+      <ul class="list">${list.map(e => `<li><span>${esc(e.name)}</span><span class="muted">${targetText(e)}</span></li>`).join('')}</ul>
+      <button class="btn btn-primary btn-block mt" data-action="startWorkout" id="dashStartWorkout">${sess && sess.completed ? 'Lihat sesi' : sess ? 'Lanjutkan latihan' : 'Mulai latihan'} →</button>`;
+  } else {
+    const nx = nextWorkoutDay(today);
+    workoutHtml = `
+      <h3 class="card-title">🧘 Hari istirahat</h3>
+      <p class="muted small">Otot tumbuh saat pemulihan. Tidur 7–9 jam, jalan santai, dan tetap penuhi protein.</p>
+      ${nx ? `<div class="hint mt">Latihan berikutnya: <b>${esc(nx.w.name)}</b> — ${fmtDateDay(nx.date)}</div>` : ''}
+      <button class="btn btn-block mt" data-action="startWorkout" id="dashStartWorkout">Buka tracker gym</button>`;
+  }
+
+  const next = nextMealSlot();
+  const todayMeals = state.meals[today] || [];
+  const slotRows = MEAL_SLOTS.map(sl => {
+    const items = todayMeals.filter(e => e.slot === sl.id);
+    const p = sumEntries(items).protein;
+    return `<li><span>${sl.icon} ${sl.label} <span class="muted small">${sl.time}</span></span><span>${items.length ? `<span class="chip chip-ok">✓ ${fmtNum(p, 1)} g</span>` : '<span class="chip chip-muted">Belum</span>'}</span></li>`;
+  }).join('');
+  const mealHtml = `
+    <div class="card-head"><div><h3 class="card-title">🍽️ Jadwal makan</h3>
+      <p class="muted small">${next ? `${next.isNow ? 'Sekarang waktunya' : 'Berikutnya'}: <b>${next.label} (${next.time})</b>` : 'Semua waktu makan hari ini sudah lewat'}</p></div></div>
+    <ul class="list">${slotRows}</ul>
+    <div class="btn-row mt">
+      ${!todayMeals.length ? '<button class="btn btn-primary grow" data-action="applyTemplateToday" id="dashApplyTemplate">⚡ Menu Harian Saya</button>' : ''}
+      <button class="btn grow" data-action="goMeals" id="dashGoMeals">Catat makan</button>
+    </div>`;
+
+  const streak = proteinStreak(), best = bestProteinStreak();
+  const weekCount = sessionsInWeek(weekStart(today)), weekTarget = weeklySessionTarget();
+  const total = completedSessions().length;
+  const logs = sortedLogs(), last = logs[logs.length - 1], first = logs[0];
+  const since = last ? daysBetween(last.date, today) : null;
+  const diff = last && first && logs.length > 1 ? round1(last.weight - first.weight) : null;
+
+  $('#page-dashboard').innerHTML = `
+    <div class="card hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-date">${greet} · ${fmtDateLong(today)}</div>
+          <h2>Sisa target protein</h2>
+          ${left > 0
+            ? `<div class="hero-big">${fmtNum(left, 1)}<small> g lagi</small></div>`
+            : `<div class="hero-big">Tercapai! <small>🎉</small></div>`}
+          <div class="hero-sub">${fmtNum(t.protein, 1)} / ${s.proteinTarget} g · rentang ${s.proteinMin}–${s.proteinMax} g</div>
+        </div>
+        <div class="ring" aria-label="Progres protein ${Math.round(pct * 100)} persen">
+          <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="50" fill="none" stroke-width="11"/>
+            <circle class="ring-prog" cx="60" cy="60" r="50" fill="none" stroke-width="11" stroke-dasharray="${C}" stroke-dashoffset="${C * (1 - pct)}"/></svg>
+          <div class="ring-label"><div>${Math.round(pct * 100)}%<small>protein</small></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-ico">🔥</div><div class="stat-val">${streak}<small> hari</small></div><div class="stat-lbl">Streak protein · terbaik ${best}</div></div>
+      <div class="stat"><div class="stat-ico">📅</div><div class="stat-val">${weekCount}<small>/${weekTarget}</small></div><div class="stat-lbl">Sesi minggu ini</div></div>
+      <div class="stat"><div class="stat-ico">🏆</div><div class="stat-val">${total}</div><div class="stat-lbl">Total sesi selesai</div></div>
+    </div>
+
+    <div class="card anim">
+      <div class="card-head"><h3 class="card-title">📊 Ringkasan hari ini</h3><button class="btn btn-sm btn-soft" data-action="goMeals" id="dashDetail">Detail</button></div>
+      ${dailySummaryHtml(today, { withProtein: false })}
+    </div>
+
+    <div class="grid-2 mb-gap">
+      <div class="card">${workoutHtml}</div>
+      <div class="card">${mealHtml}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div><h3 class="card-title">⚖️ Berat badan</h3>
+          <p class="muted small">${last ? `Terakhir dicatat ${since === 0 ? 'hari ini' : since + ' hari lalu'} (${fmtDateShort(last.date)})` : 'Belum ada catatan'}</p></div>
+        <button class="btn btn-sm ${since == null || since >= 7 ? 'btn-primary' : 'btn-soft'}" data-action="goWeight" id="dashLogWeight">Catat berat</button>
+      </div>
+      <div class="row">
+        <div class="stat-val">${fmtNum(last ? last.weight : s.weight, 1)}<small> kg</small></div>
+        ${diff != null ? `<span class="chip ${diff >= 0 ? 'chip-ok' : 'chip-warn'}">${diff >= 0 ? '▲' : '▼'} ${fmtNum(Math.abs(diff), 1)} kg sejak ${fmtDateShort(first.date)}</span>` : ''}
+      </div>
+      ${since != null && since >= 7 ? '<div class="hint mt">⏰ Sudah seminggu — saatnya timbang berat badan mingguan.</div>' : ''}
+    </div>
+    <p class="foot-note">Tujuan: ${esc(s.goal)}</p>`;
+}
+
+/* ---------- 8b. MAKAN ---------- */
+function renderMeals() {
+  $('#page-makan').innerHTML =
+    pageHead('Makan', 'Catat asupan & pantau target harian', seg([['log', 'Catatan'], ['db', 'Database']], ui.mealTab, 'mealTab')) +
+    (ui.mealTab === 'db' ? foodDbHtml() : mealLogHtml());
+}
+
+function mealLogHtml() {
+  const date = ui.mealDate, list = state.meals[date] || [], s = state.settings;
+
+  const slots = MEAL_SLOTS.map(sl => {
+    const items = list.filter(e => e.slot === sl.id);
+    const tot = sumEntries(items);
+    return `<div class="card">
+      <div class="slot-head">
+        <div class="slot-icon">${sl.icon}</div>
+        <div class="grow"><h3>${sl.label} <span class="muted small" style="font-weight:500">${sl.time}</span></h3>
+          <div class="slot-tot">${fmtNum(tot.protein, 1)} g protein · ${fmtNum(tot.kcal)} kkal · ${fmtRp(tot.cost)}</div></div>
+        <button class="btn btn-sm btn-primary" data-action="openAddFood" data-slot="${sl.id}" id="add-${sl.id}">+ Tambah</button>
+      </div>
+      ${items.length ? `<ul class="entry-list">${items.map(e => `
+        <li class="entry">
+          <div class="entry-main">
+            <div class="entry-name">${esc(e.name)} <span class="muted small" style="font-weight:500">· ${esc(e.portion || '')}</span></div>
+            <div class="entry-meta">${fmtNum(e.protein * e.qty, 1)} g P · ${fmtNum(e.kcal * e.qty)} kkal · ${fmtNum(e.satFat * e.qty, 1)} g LJ · ${fmtRp(e.price * e.qty)}</div>
+          </div>
+          <div class="stepper">
+            <button type="button" data-action="qtyStep" data-id="${e.id}" data-d="-1" aria-label="Kurangi">−</button>
+            <input type="number" min="0" step="0.5" inputmode="decimal" value="${e.qty}" data-change="qtySet" data-id="${e.id}" aria-label="Jumlah porsi">
+            <button type="button" data-action="qtyStep" data-id="${e.id}" data-d="1" aria-label="Tambah">+</button>
+          </div>
+          <button class="btn-icon ghost" data-action="delEntry" data-id="${e.id}" aria-label="Hapus">🗑️</button>
+        </li>`).join('')}</ul>` : '<p class="empty-sm mt">Belum ada catatan untuk waktu ini.</p>'}
+    </div>`;
+  }).join('');
+
+  const ws = weekStart(date), we = addDays(ws, 6);
+  const wk = rangeTotals(ws, we), wkBudget = s.budget * 7;
+  const d = parseDate(date), ms = toDateStr(new Date(d.getFullYear(), d.getMonth(), 1));
+  const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const me = toDateStr(new Date(d.getFullYear(), d.getMonth(), daysInMonth));
+  const mo = rangeTotals(ms, me), moBudget = s.budget * daysInMonth;
+  const costTile = (lbl, val, budget, days, sub) => {
+    const st = statusLimit(val, budget);
+    return `<div class="cost-tile"><div class="lbl">${lbl}</div><div class="val">${fmtRp(val)}</div>
+      <div class="bar bar-${st}"><div class="bar-fill" style="width:${Math.min(100, budget ? val / budget * 100 : 0)}%"></div></div>
+      <div class="metric-sub">dari anggaran ${fmtRp(budget)} · ${days} hari tercatat${days ? ` · rata-rata ${fmtRp(val / days)}/hari` : ''}</div>
+      <div class="metric-sub">${sub}</div></div>`;
+  };
+
+  return dateNav(date, 'meal') + `
+    <div class="quick-actions">
+      <button class="btn btn-primary" data-action="applyTemplate" id="applyTemplateBtn">⚡ Terapkan "Menu Harian Saya"</button>
+      <button class="btn" data-action="copyYesterday" id="copyYesterdayBtn">📋 Salin kemarin</button>
+      <button class="btn" data-action="saveTemplate" id="saveTemplateBtn">💾 Jadikan template</button>
+    </div>
+    <div class="card">
+      <h3 class="card-title">📊 Ringkasan harian</h3>
+      ${dailySummaryHtml(date)}
+    </div>
+    ${slots}
+    <div class="card">
+      <h3 class="card-title">💰 Ringkasan biaya</h3>
+      <div class="cost-grid">
+        ${costTile(`Minggu ini (${fmtDateShort(ws)}–${fmtDateShort(we)})`, wk.cost, wkBudget, wk.days, wk.cost > wkBudget ? '⚠️ Melebihi anggaran mingguan' : '✓ Sesuai anggaran')}
+        ${costTile(`Bulan ${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`, mo.cost, moBudget, mo.days, mo.cost > moBudget ? '⚠️ Melebihi anggaran bulanan' : '✓ Sesuai anggaran')}
+      </div>
+    </div>`;
+}
+
+function foodDbHtml() {
+  return `
+    <div class="card">
+      <div class="card-head"><div><h3 class="card-title">🗂️ Database makanan</h3><p class="muted small">Nilai per porsi. Edit sesuai warung/merek favorit Anda.</p></div>
+        <button class="btn btn-sm btn-primary" data-action="openFoodForm" id="newFoodBtn">+ Makanan baru</button></div>
+      <div class="food-pick">
+        ${state.foods.map(f => `
+          <div class="food-item" style="cursor:default">
+            <div class="fi-main"><b>${esc(f.name)} ${f.builtin ? '<span class="chip chip-primary">Bawaan</span>' : ''}</b><span>${esc(f.portion)}</span>
+              <div class="nutri"><span class="chip chip-ok">${fmtNum(f.protein, 1)} g protein</span><span class="chip chip-muted">${fmtNum(f.kcal)} kkal</span>
+              <span class="chip chip-warn">${fmtNum(f.satFat, 1)} g LJ</span><span class="chip chip-muted">${foodPriceText(f)}</span></div></div>
+            <div class="ex-actions">
+              <button class="btn-icon" data-action="openFoodForm" data-id="${f.id}" aria-label="Edit ${esc(f.name)}">✏️</button>
+              ${f.builtin ? '' : `<button class="btn-icon" data-action="delFood" data-id="${f.id}" aria-label="Hapus ${esc(f.name)}">🗑️</button>`}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="card-title">⚡ Template "Menu Harian Saya"</h3>
+      ${MEAL_SLOTS.map(sl => `<p class="small" style="margin-bottom:6px"><b>${sl.icon} ${sl.label}:</b> ${(state.template[sl.id] || []).map(t => {
+        const f = findFood(t.foodId); return f ? `${fmtNum(t.qty, 1)}× ${esc(f.name)}` : ''; }).filter(Boolean).join(', ') || '<span class="muted">—</span>'}</p>`).join('')}
+      <p class="hint mt">Ubah template: catat menu di halaman Catatan lalu tekan "💾 Jadikan template".</p>
+    </div>`;
+}
+
+function foodPickHtml(q = '') {
+  const items = state.foods.filter(f => f.name.toLowerCase().includes(q.toLowerCase().trim()));
+  if (!items.length) return '<p class="empty-sm">Tidak ditemukan. Buat makanan baru di bawah.</p>';
+  return items.map(f => `
+    <button type="button" class="food-item" data-action="addFood" data-id="${f.id}">
+      <div class="fi-main"><b>${esc(f.name)}</b><span>${esc(f.portion)} · ${fmtNum(f.protein, 1)} g P · ${fmtNum(f.kcal)} kkal · ${foodPriceText(f)}</span></div>
+      <span class="fi-add">+</span>
+    </button>`).join('');
+}
+
+function openAddFood(slot) {
+  ui.addSlot = slot;
+  const sl = MEAL_SLOTS.find(x => x.id === slot);
+  openModal({
+    title: `${sl.icon} Tambah ke ${sl.label}`,
+    body: `<input class="input" type="search" placeholder="Cari makanan…" data-input="foodSearch" id="foodSearch" autocomplete="off">
+      <div class="food-pick" id="foodPickList">${foodPickHtml()}</div>
+      <p class="small muted mb">Ketuk untuk menambah 1 porsi. Jumlah bisa diubah setelahnya.</p>
+      <button type="button" class="btn btn-block btn-soft" data-action="openFoodForm" data-from-add="1" id="addNewFoodBtn">+ Buat makanan baru</button>`,
+    foot: '<button class="btn btn-primary" data-action="closeModal" type="button" id="addFoodDone">Selesai</button>',
+  });
+}
+
+function openFoodForm(id, fromAdd = false) {
+  ui.foodFormFromAdd = fromAdd;
+  const f = id ? findFood(id) : { name: '', portion: '1 porsi', protein: '', kcal: '', satFat: '', priceMin: '', priceMax: '' };
+  const field = (name, label, val, attrs = 'type="number" step="0.1" min="0" inputmode="decimal"') =>
+    `<label class="field"><span>${label}</span><input class="input" name="${name}" value="${esc(val)}" ${attrs}></label>`;
+  openModal({
+    title: id ? 'Edit makanan' : 'Makanan baru',
+    body: `<form id="foodForm" data-form="food" novalidate>
+      <input type="hidden" name="id" value="${id || ''}">
+      ${field('name', 'Nama makanan', f.name, 'type="text" placeholder="mis. Dada ayam rebus" required')}
+      ${field('portion', 'Ukuran porsi', f.portion, 'type="text" placeholder="mis. 100 g"')}
+      <div class="form-grid">
+        ${field('protein', 'Protein (g)', f.protein)}
+        ${field('kcal', 'Kalori (kkal)', f.kcal, 'type="number" step="1" min="0" inputmode="numeric"')}
+        ${field('satFat', 'Lemak jenuh (g)', f.satFat)}
+        <span></span>
+        ${field('priceMin', 'Harga min (Rp)', f.priceMin, 'type="number" step="100" min="0" inputmode="numeric"')}
+        ${field('priceMax', 'Harga maks (Rp, opsional)', f.priceMax || '', 'type="number" step="100" min="0" inputmode="numeric"')}
+      </div>
+      <p class="hint">Biaya dihitung dari rata-rata harga min & maks.</p>
+    </form>`,
+    foot: `<button class="btn" type="button" data-action="${fromAdd ? 'backToAdd' : 'closeModal'}">Batal</button><button class="btn btn-primary" type="submit" form="foodForm" id="saveFoodBtn">Simpan</button>`,
+  });
+}
+
+/* ---------- 8c. GYM (DUMBBELL & MEDIA) ---------- */
+function renderGym() {
+  $('#page-gym').innerHTML =
+    pageHead('Gym', 'Dumbbell · 4 hari/minggu', seg([['sesi', 'Sesi'], ['program', 'Program']], ui.gymTab, 'gymTab')) +
+    (ui.gymTab === 'program' ? programHtml() : sessionHtml());
+}
+
+function weightOptions(selected) {
+  const list = [0, ...sortedDumbbells()];
+  const sel = num(selected);
+  if (!list.includes(sel)) list.push(sel);
+  return list.sort((a, b) => a - b).map(w => `<option value="${w}" ${w === sel ? 'selected' : ''}>${w === 0 ? 'Tanpa beban' : w + ' kg'}</option>`).join('');
+}
+
+function sessionHtml() {
+  const date = ui.gymDate, s = state.settings;
+  const wid = getWorkoutForDate(date);
+  const sess = getSessionView(date);
+  const opts = Object.entries(state.program.workouts).map(([id, w]) => `<option value="${id}" ${id === wid ? 'selected' : ''}>${esc(w.name)} — ${esc(w.focus || '')}</option>`).join('') +
+    `<option value="rest" ${!state.program.workouts[wid] ? 'selected' : ''}>Istirahat</option>`;
+  const restOpts = [45, 60, 90, 120, 150, 180];
+  if (!restOpts.includes(s.restSeconds)) restOpts.push(s.restSeconds);
+
+  let html = dateNav(date, 'gym') + `
+    <div class="card session-head">
+      <div class="row wrap">
+        <label class="grow" style="min-width:180px"><span class="muted small" style="font-weight:650">Latihan</span>
+          <select class="input" data-change="gymWorkout" id="gymWorkoutSelect">${opts}</select></label>
+        <label><span class="muted small" style="font-weight:650">Istirahat</span>
+          <select class="input" data-change="restQuick" id="restQuickSelect">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}" ${v === s.restSeconds ? 'selected' : ''}>${v} dtk</option>`).join('')}</select></label>
+        <button class="btn btn-soft" style="align-self:flex-end" data-action="timerStart" id="timerStartBtn">⏱ Mulai</button>
+      </div>
+      ${sess ? (() => { const p = sessionProgress(sess); return `
+        <div class="metric mt">
+          <div class="metric-head"><span class="metric-label">Progres sesi ${sess.completed ? '<span class="chip chip-ok">Selesai</span>' : ''}</span><span class="metric-val" id="sessProgText"><b>${p.done}</b> / ${p.total} set</span></div>
+          <div class="bar bar-primary"><div class="bar-fill" id="sessProgFill" style="width:${p.total ? p.done / p.total * 100 : 0}%"></div></div>
+        </div>`; })() : ''}
+    </div>`;
+
+  if (!sess) {
+    const nx = nextWorkoutDay(date);
+    return html + `<div class="card rest-card"><span class="big-emoji">🧘</span><h3>Hari istirahat</h3>
+      <p class="muted small mt">Pemulihan adalah bagian penting dari pertumbuhan otot. Jalan santai, peregangan ringan, tidur cukup, dan tetap penuhi protein.</p>
+      ${nx ? `<p class="hint mt">Latihan berikutnya: <b>${esc(nx.w.name)}</b> — ${fmtDateDay(nx.date)}</p>` : ''}
+      <p class="small muted">Ingin tetap latihan? Pilih latihan pada menu di atas.</p></div>`;
+  }
+
+  html += sess.entries.map((en, i) => exerciseCardHtml(en, i, date)).join('');
+  html += `<div class="card">
+      <label class="field"><span>📝 Catatan sesi</span>
+        <textarea class="input" rows="3" data-change="sessionNote" id="sessionNote" placeholder="Energi, kualitas tidur, keluhan, dll.">${esc(sess.notes)}</textarea></label>
+      <button class="btn ${sess.completed ? '' : 'btn-primary'} btn-block" data-action="finishSession" id="finishSessionBtn">${sess.completed ? '↺ Tandai belum selesai' : '✓ Selesaikan sesi'}</button>
+    </div>`;
+  return html;
+}
+
+function exerciseCardHtml(en, i, date) {
+  const prev = findPrevEntry(date, en.exId, en.name);
+  const sug = overloadSuggestion(prev, en);
+  const done = en.sets.filter(s => s.done).length;
+  const isTime = en.unit === 'detik';
+  const range = en.repMin === en.repMax ? `${en.repMin}` : `${en.repMin}-${en.repMax}`;
+  const fmtSet = s => num(s.weight) > 0 ? `${s.weight}kg×${s.reps}` : `${s.reps}${isTime ? ' dtk' : ''}`;
+  const thumbUrl = en.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=200&auto=format&fit=crop&q=80';
+
+  return `<div class="card ex-card ${done === en.sets.length ? 'complete' : ''}" id="ex-${i}">
+    <div class="ex-top-row">
+      <!-- Thumbnail Foto / Video -->
+      <button type="button" class="ex-thumb-btn" data-action="openMovementGuide" data-ex="${i}" title="Lihat foto & video ${esc(en.name)}" aria-label="Lihat panduan gerakan">
+        <img class="ex-thumb-img" src="${esc(thumbUrl)}" alt="${esc(en.name)}" loading="lazy">
+        <span class="ex-thumb-play">▶</span>
+      </button>
+      <div class="ex-title-info">
+        <h3>${esc(en.name)}</h3>
+        <div class="ex-target">🎯 ${targetText(en)} · ${weightText(en)}</div>
+      </div>
+      <div class="ex-title-side">
+        <span class="chip ${done === en.sets.length ? 'chip-ok' : done ? 'chip-warn' : 'chip-muted'}" id="exc-${i}">${done}/${en.sets.length}</span>
+        <button type="button" class="btn btn-sm btn-soft" data-action="openMovementGuide" data-ex="${i}" style="padding:4px 8px;font-size:.73rem">🎬 Panduan</button>
+      </div>
+    </div>
+    ${prev ? `<div class="prev"><b>Sesi lalu · ${fmtDateDay(prev.date)}:</b> ${prev.entry.sets.filter(s => s.done).map(fmtSet).join(' · ')}
+        ${prev.entry.note ? `<div class="prev-note">📝 ${esc(prev.entry.note)}</div>` : ''}</div>`
+      : '<div class="prev">Belum ada data sesi sebelumnya — mulai dari batas bawah beban.</div>'}
+    ${sug ? `<div class="suggest ${sug.weight ? '' : 'info'}">📈 <div><b>${sug.title}</b><br><span style="font-weight:500">${sug.text}</span></div></div>` : ''}
+    <div class="sets">
+      <div class="set-row set-head"><span>Set</span><span>Beban</span><span>${isTime ? 'Detik' : 'Rep'}${en.perSide ? '/' + en.perSide : ''}</span><span>✓</span></div>
+      ${en.sets.map((s, j) => `
+        <div class="set-row ${s.done ? 'done' : ''}">
+          <span class="set-no">${j + 1}</span>
+          <select class="input input-sm" data-change="setField" data-ex="${i}" data-set="${j}" data-field="weight" aria-label="Beban set ${j + 1}">${weightOptions(s.weight)}</select>
+          <input class="input input-sm" type="number" min="0" inputmode="numeric" placeholder="${range}" value="${s.reps}" data-change="setField" data-ex="${i}" data-set="${j}" data-field="reps" aria-label="Repetisi set ${j + 1}">
+          <label class="check"><input type="checkbox" ${s.done ? 'checked' : ''} data-change="toggleSet" data-ex="${i}" data-set="${j}" aria-label="Set ${j + 1} selesai"><span></span></label>
+        </div>`).join('')}
+    </div>
+    <input class="input input-sm mt" placeholder="Catatan latihan (opsional)" value="${esc(en.note)}" data-change="exNote" data-ex="${i}" aria-label="Catatan ${esc(en.name)}">
+  </div>`;
+}
+
+function refreshSessionProgress(sess) {
+  const p = sessionProgress(sess);
+  const fill = $('#sessProgFill'), txt = $('#sessProgText');
+  if (fill) fill.style.width = (p.total ? p.done / p.total * 100 : 0) + '%';
+  if (txt) txt.innerHTML = `<b>${p.done}</b> / ${p.total} set`;
+  sess.entries.forEach((en, i) => {
+    const d = en.sets.filter(s => s.done).length, all = d === en.sets.length;
+    const chip = $('#exc-' + i), card = $('#ex-' + i);
+    if (chip) { chip.textContent = `${d}/${en.sets.length}`; chip.className = `chip ${all ? 'chip-ok' : d ? 'chip-warn' : 'chip-muted'}`; }
+    if (card) card.classList.toggle('complete', all);
+  });
+  return p;
+}
+
+/** Modal Panduan Gerakan (Foto, Video YouTube, Otot Target, Form Cues & Kesalahan) */
+function openMovementGuide(idx) {
+  const sess = getSessionView(ui.gymDate);
+  if (!sess || !sess.entries[idx]) return;
+  const en = sess.entries[idx];
+
+  const targetMuscles = en.target || 'Dada, Bahu, Triceps, Core';
+  const cuesList = (en.cues || '1. Jaga postur punggung tetap lurus.\n2. Gerakkan beban dengan tempo terkontrol.\n3. Bernapas teratur saat kontraksi.').split('\n').filter(Boolean);
+  const mistakes = en.mistakes || 'Mengayun tubuh untuk melempar beban; kehilangan kontrol tempo.';
+  const ytSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(en.name + ' dumbbell form')}`;
+  const videoSrc = en.video || `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(en.name + ' dumbbell')}`;
+  const photoSrc = en.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80';
+
+  const bodyHtml = `
+    <!-- Video Player / Foto Gerakan -->
+    <div class="guide-media-box" id="guideMediaContainer">
+      <iframe src="${esc(videoSrc)}" title="Video tutorial ${esc(en.name)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <div class="row between wrap mb">
+      <div class="btn-row">
+        <button type="button" class="btn btn-sm btn-soft active" id="btnShowVideo" data-action="switchGuideMedia" data-type="video" data-v="${esc(videoSrc)}">🎥 Video Tutorial</button>
+        <button type="button" class="btn btn-sm" id="btnShowPhoto" data-action="switchGuideMedia" data-type="photo" data-img="${esc(photoSrc)}">📷 Foto / Ilustrasi</button>
+      </div>
+      <a href="${esc(ytSearch)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="text-decoration:none">Buka YouTube ↗</a>
+    </div>
+
+    <!-- Otot Sasaran -->
+    <div class="guide-tags">
+      <span class="chip chip-primary">🎯 Sasaran Otot:</span>
+      ${targetMuscles.split(',').map(m => `<span class="chip chip-ok">${esc(m.trim())}</span>`).join('')}
+    </div>
+
+    <!-- Form Cues -->
+    <h3 style="font-size:.95rem;margin-top:10px">📋 Teknik & Langkah Gerakan:</h3>
+    <div class="guide-cues">
+      ${cuesList.map(c => `
+        <div class="guide-cue">
+          <span class="guide-num">✓</span>
+          <span>${esc(c.replace(/^\d+[\.\-\)]\s*/, ''))}</span>
+        </div>`).join('')}
+    </div>
+
+    <!-- Kesalahan Umum -->
+    <div class="guide-box warn">
+      <b>⚠️ Kesalahan Umum yang Harus Dihindari:</b>
+      <div>${esc(mistakes)}</div>
+    </div>`;
+
+  openModal({
+    title: `🎬 Panduan: ${en.name}`,
+    body: bodyHtml,
+    foot: `<button class="btn btn-primary" data-action="closeModal" type="button">Tutup Panduan</button>`,
+  });
+}
+
+function programHtml() {
+  const wk = state.program.workouts;
+  const schedOpts = sel => Object.entries(wk).map(([id, w]) => `<option value="${id}" ${id === sel ? 'selected' : ''}>${esc(w.name)}</option>`).join('') +
+    `<option value="rest" ${!wk[sel] ? 'selected' : ''}>Istirahat</option>`;
+  return `
+    <div class="card">
+      <h3 class="card-title">📅 Jadwal mingguan</h3>
+      ${WEEK_ORDER.map(d => `<div class="schedule-row"><span class="day">${DAY_NAMES[d]}</span>
+        <select class="input input-sm" data-change="schedule" data-day="${d}" id="sched-${d}">${schedOpts(state.program.schedule[d])}</select></div>`).join('')}
+      <p class="hint mt">Target sesi per minggu: <b>${weeklySessionTarget()}</b> (jumlah hari latihan di jadwal).</p>
+    </div>
+    ${Object.entries(wk).map(([wid, w]) => `
+      <div class="card">
+        <div class="card-head">
+          <div><h3 class="card-title">${esc(w.name)}</h3><p class="muted small">${esc(w.focus || '')}</p></div>
+          <div class="ex-actions">
+            <button class="btn-icon" data-action="editWorkout" data-wid="${wid}" aria-label="Ubah nama ${esc(w.name)}">✏️</button>
+            <button class="btn-icon" data-action="delWorkout" data-wid="${wid}" aria-label="Hapus ${esc(w.name)}">🗑️</button>
+          </div>
+        </div>
+        ${w.exercises.length ? w.exercises.map((e, k) => `
+          <div class="ex-line">
+            <div class="grow">
+              <b>${esc(e.name)}</b>
+              <span>${targetText(e)} · ${weightText(e)}${e.target ? ` · ${esc(e.target)}` : ''}</span>
+            </div>
+            <div class="ex-actions">
+              <button class="btn-icon ghost" data-action="moveEx" data-wid="${wid}" data-idx="${k}" data-dir="-1" ${k === 0 ? 'disabled' : ''} aria-label="Naikkan urutan">↑</button>
+              <button class="btn-icon ghost" data-action="moveEx" data-wid="${wid}" data-idx="${k}" data-dir="1" ${k === w.exercises.length - 1 ? 'disabled' : ''} aria-label="Turunkan urutan">↓</button>
+              <button class="btn-icon ghost" data-action="editEx" data-wid="${wid}" data-exid="${e.id}" aria-label="Edit ${esc(e.name)}">✏️</button>
+              <button class="btn-icon ghost" data-action="delEx" data-wid="${wid}" data-exid="${e.id}" aria-label="Hapus ${esc(e.name)}">🗑️</button>
+            </div>
+          </div>`).join('') : '<p class="empty-sm">Belum ada latihan.</p>'}
+        <button class="btn btn-soft btn-block mt" data-action="editEx" data-wid="${wid}" id="addEx-${wid}">+ Tambah latihan</button>
+      </div>`).join('')}
+    <button class="btn btn-block" data-action="editWorkout" id="addWorkoutBtn">+ Buat hari latihan baru</button>
+    <p class="hint mt">Perubahan program berlaku untuk sesi baru. Sesi yang sudah tersimpan tidak berubah.</p>`;
+}
+
+function openExerciseForm(wid, exid) {
+  const w = state.program.workouts[wid];
+  const e = exid ? w.exercises.find(x => x.id === exid) : {
+    name: '', sets: 3, repMin: 10, repMax: 12, unit: 'rep', perSide: '',
+    wMin: sortedDumbbells()[0] || 0, wMax: sortedDumbbells()[0] || 0,
+    target: '', media: '', video: '', cues: '', mistakes: ''
+  };
+  const numField = (name, label, val) => `<label class="field"><span>${label}</span><input class="input" type="number" min="1" step="1" inputmode="numeric" name="${name}" value="${val}"></label>`;
+
+  openModal({
+    title: `${exid ? 'Edit' : 'Tambah'} latihan · ${esc(w.name)}`,
+    body: `<form id="exForm" data-form="exercise" novalidate>
+      <input type="hidden" name="wid" value="${wid}"><input type="hidden" name="exid" value="${exid || ''}">
+      <label class="field"><span>Nama latihan</span><input class="input" name="name" value="${esc(e.name)}" placeholder="mis. Dumbbell Bench Press" required></label>
+      <label class="field"><span>Otot sasaran</span><input class="input" name="target" value="${esc(e.target || '')}" placeholder="mis. Dada, Triceps, Bahu depan"></label>
+      <div class="form-grid three">${numField('sets', 'Set', e.sets)}${numField('repMin', 'Rep/detik min', e.repMin)}${numField('repMax', 'Rep/detik maks', e.repMax)}</div>
+      <div class="form-grid">
+        <label class="field"><span>Satuan</span><select class="input" name="unit"><option value="rep" ${e.unit === 'rep' ? 'selected' : ''}>Repetisi</option><option value="detik" ${e.unit === 'detik' ? 'selected' : ''}>Detik</option></select></label>
+        <label class="field"><span>Per sisi?</span><select class="input" name="perSide">
+          <option value="" ${!e.perSide ? 'selected' : ''}>Tidak</option><option value="sisi" ${e.perSide === 'sisi' ? 'selected' : ''}>/sisi</option><option value="kaki" ${e.perSide === 'kaki' ? 'selected' : ''}>/kaki</option></select></label>
+        <label class="field"><span>Beban min</span><select class="input" name="wMin">${weightOptions(e.wMin)}</select></label>
+        <label class="field"><span>Beban maks</span><select class="input" name="wMax">${weightOptions(e.wMax)}</select></label>
+      </div>
+      <label class="field"><span>URL Foto / Gambar Gerakan</span><input class="input" name="media" value="${esc(e.media || '')}" placeholder="https://... (JPG/PNG/GIF)"></label>
+      <label class="field"><span>URL Video Tutorial (YouTube Embed)</span><input class="input" name="video" value="${esc(e.video || '')}" placeholder="https://www.youtube.com/embed/..."></label>
+      <label class="field"><span>Panduan langkah & teknik (Form Cues)</span><textarea class="input" name="cues" placeholder="1. Kunci posisi punggung...&#10;2. Tarik napas saat turun...">${esc(e.cues || '')}</textarea></label>
+      <label class="field"><span>Kesalahan umum yang dihindari</span><input class="input" name="mistakes" value="${esc(e.mistakes || '')}" placeholder="mis. Siku terlalu melebar, pinggang melengkung"></label>
+    </form>`,
+    foot: `<button class="btn" type="button" data-action="closeModal">Batal</button><button class="btn btn-primary" type="submit" form="exForm" id="saveExBtn">Simpan</button>`,
+  });
+}
+
+function openWorkoutForm(wid) {
+  const w = wid ? state.program.workouts[wid] : { name: '', focus: '' };
+  openModal({
+    title: wid ? 'Ubah hari latihan' : 'Hari latihan baru',
+    body: `<form id="workoutForm" data-form="workout" novalidate><input type="hidden" name="wid" value="${wid || ''}">
+      <label class="field"><span>Nama</span><input class="input" name="name" value="${esc(w.name)}" placeholder="mis. Full Body" required></label>
+      <label class="field"><span>Fokus otot</span><input class="input" name="focus" value="${esc(w.focus || '')}" placeholder="mis. Seluruh tubuh"></label></form>`,
+    foot: `<button class="btn" type="button" data-action="closeModal">Batal</button><button class="btn btn-primary" type="submit" form="workoutForm" id="saveWorkoutBtn">Simpan</button>`,
+  });
+}
+
+/* ---------- 8d. PROGRES ---------- */
+function exerciseNames() {
+  const set = new Set();
+  Object.values(state.program.workouts).forEach(w => w.exercises.forEach(e => set.add(e.name)));
+  Object.values(state.sessions).forEach(s => s.entries.forEach(e => set.add(e.name)));
+  return [...set];
+}
+function chartCard(id, title, sub, extra = '') {
+  return `<div class="card"><div class="card-head"><div><h3 class="card-title">${title}</h3><p class="muted small">${sub}</p></div>${extra}</div>
+    <div class="chart-box"><canvas id="${id}" role="img" aria-label="${title}"></canvas></div></div>`;
+}
+
+function renderProgress() {
+  const s = state.settings, today = todayStr();
+  const logs = sortedLogs().reverse();
+  const hasMeasure = state.bodyLogs.some(l => l.arm || l.chest || l.thigh);
+  const names = exerciseNames();
+  if (!ui.chartExercise || !names.includes(ui.chartExercise)) ui.chartExercise = names.find(n => maxWeightSeries(n).data.length) || names[0];
+  const last7 = rangeTotals(addDays(today, -6), today);
+
+  $('#page-progres').innerHTML = pageHead('Progres', 'Berat badan, kepatuhan, dan grafik') + `
+    <div class="stats">
+      <div class="stat"><div class="stat-ico">🔥</div><div class="stat-val">${proteinStreak()}<small> hari</small></div><div class="stat-lbl">Streak protein ≥ ${s.proteinMin} g</div></div>
+      <div class="stat"><div class="stat-ico">🏆</div><div class="stat-val">${completedSessions().length}</div><div class="stat-lbl">Sesi gym selesai</div></div>
+      <div class="stat"><div class="stat-ico">🥚</div><div class="stat-val">${last7.days ? fmtNum(last7.protein / last7.days, 0) : 0}<small> g</small></div><div class="stat-lbl">Rata-rata protein 7 hari</div></div>
+    </div>
+
+    <form class="card" data-form="bodyLog" id="bodyLogForm" novalidate>
+      <h3 class="card-title">⚖️ Catat berat badan mingguan</h3>
+      <div class="form-grid">
+        <label class="field"><span>Tanggal</span><input class="input" type="date" name="date" value="${today}" max="${today}"></label>
+        <label class="field"><span>Berat (kg) *</span><input class="input" type="number" step="0.1" min="20" inputmode="decimal" name="weight" id="weightInput" placeholder="${s.weight}" required></label>
+      </div>
+      <div class="form-grid three">
+        <label class="field"><span>Lengan (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="arm" placeholder="opsional"></label>
+        <label class="field"><span>Dada (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="chest" placeholder="opsional"></label>
+        <label class="field"><span>Paha (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="thigh" placeholder="opsional"></label>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" id="saveWeightBtn">Simpan</button>
+      ${logs.length ? `<div class="divider"></div>${logs.slice(0, 5).map(l => `
+        <div class="log-item"><div class="grow"><b>${fmtNum(l.weight, 1)} kg</b> <span>${fmtDateLong(l.date)}${[l.arm && `lengan ${fmtNum(l.arm, 1)}`, l.chest && `dada ${fmtNum(l.chest, 1)}`, l.thigh && `paha ${fmtNum(l.thigh, 1)}`].filter(Boolean).map(x => ' · ' + x + ' cm').join('')}</span></div>
+          <button class="btn-icon ghost" type="button" data-action="delLog" data-id="${l.id}" aria-label="Hapus catatan">🗑️</button></div>`).join('')}` : ''}
+    </form>
+
+    <div class="row between mb wrap"><h3>📈 Grafik</h3>${seg([['7', '7 hari'], ['14', '14 hari'], ['30', '30 hari']], String(ui.chartRange), 'chartRange')}</div>
+    ${chartCard('chartWeight', '⚖️ Berat badan', 'Perubahan berat dari catatan mingguan')}
+    ${hasMeasure ? chartCard('chartMeasure', '📏 Lingkar tubuh', 'Lengan, dada, dan paha (cm)') : ''}
+    ${chartCard('chartProtein', '🥚 Protein harian vs target', `Ideal ${s.proteinTarget} g · minimal ${s.proteinMin} g`)}
+    ${chartCard('chartKcal', '🔥 Kalori harian', `Target ${fmtNum(s.calorieTarget)} kkal`)}
+    ${chartCard('chartMax', '🏋️ Beban maksimal per latihan', 'Beban terberat yang diselesaikan per sesi',
+      `<select class="input input-sm" style="max-width:230px" data-change="chartExercise" id="chartExerciseSelect">${names.map(n => `<option ${n === ui.chartExercise ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>`)}
+    ${chartCard('chartSessions', '📅 Sesi gym per minggu', `Target ${weeklySessionTarget()} sesi/minggu · 8 minggu terakhir`)}
+    ${chartCard('chartCost', '💰 Biaya makan per minggu', `Anggaran ${fmtRp(s.budget * 7)}/minggu · 8 minggu terakhir`)}`;
+
+  drawCharts();
+}
+
+/* ---------- 8e. PENGATURAN & CLOUD SYNC ---------- */
+function renderSettings() {
+  const s = state.settings;
+  const c = s.cloud || {};
+  const nf = (name, label, val, step = '1', id = '') =>
+    `<label class="field"><span>${label}</span><input class="input" type="number" step="${step}" min="0" inputmode="decimal" name="${name}" value="${val}" ${id ? `id="${id}"` : ''}></label>`;
+
+  $('#page-pengaturan').innerHTML = pageHead('Pengaturan', 'Profil, target harian, cloud database, dan data') + `
+    <!-- KARTU BUKA DI DEVICE LAIN / HP -->
+    <div class="card" style="border:1.5px solid color-mix(in srgb,var(--primary-2) 45%,var(--border))">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">📱 Akses di HP & Perangkat Lain</h3>
+          <p class="muted small">Buka OtotKu di smartphone atau tablet lewat Wi-Fi lokal atau pasang di layar utama HP (PWA).</p>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" data-action="openDeviceModal">📱 Buka QR Code</button>
+      </div>
+      <div class="btn-row wrap mt">
+        <button type="button" class="btn btn-soft" data-action="openDeviceModal">📲 Cara Pasang di Layar Utama (PWA)</button>
+        <button type="button" class="btn" data-action="openDeployGuide">🌐 Cara Online Gratis (Netlify/Vercel)</button>
+      </div>
+    </div>
+
+    <!-- CLOUD DATABASE SYNC CARD -->
+    <div class="card" style="border:1.5px solid color-mix(in srgb,var(--primary) 40%,var(--border))">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">☁️ Sinkronisasi Cloud (Supabase / Firebase)</h3>
+          <p class="muted small">Simpan otomatis data ke database cloud agar tidak hilang saat ganti perangkat atau membersihkan browser.</p>
+        </div>
+        <span class="chip ${c.enabled ? 'chip-ok' : 'chip-muted'}">${c.enabled ? '✓ Aktif' : 'Nonaktif (Lokal)'}</span>
+      </div>
+
+      <form data-form="cloudSettings" id="cloudSettingsForm">
+        <div class="field mb">
+          <span>Pilih Provider Database:</span>
+          ${seg([['supabase', '⚡ Supabase (Rekomendasi)'], ['firebase', '🔥 Firebase']], c.provider || 'supabase', 'cloudProviderSelect')}
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Kunci Pengguna / ID Sinkronisasi</span>
+            <input class="input" type="text" name="syncKey" id="cloudSyncKey" value="${esc(c.syncKey || '')}" placeholder="mis. rifat_gym_2026" required>
+          </label>
+          <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:10px">
+            <button type="button" class="btn btn-soft" data-action="copySyncKey" style="flex:1">📋 Salin Kunci</button>
+            <button type="button" class="btn" data-action="newSyncKey" title="Buat Kunci Baru">↺</button>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:-4px">💡 Gunakan Kunci Sinkronisasi yang sama di HP dan laptop Anda agar datanya langsung terhubung.</p>
+
+        <!-- SUPABASE INPUTS -->
+        <div id="supabaseFields" style="${(c.provider || 'supabase') === 'supabase' ? '' : 'display:none'}">
+          <label class="field">
+            <span>Supabase Project URL</span>
+            <input class="input" type="url" name="supabaseUrl" value="${esc(c.supabaseUrl || '')}" placeholder="https://xyzcompany.supabase.co">
+          </label>
+          <label class="field">
+            <span>Supabase Anon / Public Key</span>
+            <input class="input" type="password" name="supabaseKey" value="${esc(c.supabaseKey || '')}" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+          </label>
+          <div class="hint">
+            <b>Panduan Cepat Supabase (Gratis 2 Menit):</b>
+            <ol style="padding-left:18px;margin-top:4px">
+              <li>Buka <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:700">supabase.com</a> dan buat project baru gratis.</li>
+              <li>Salin <b>Project URL</b> dan <b>Anon Key</b> dari menu <i>Project Settings → API</i>.</li>
+              <li>Buka menu <b>SQL Editor</b> di Supabase, lalu salin dan jalankan skrip tabel di bawah ini:</li>
+            </ol>
+            <div class="code-box" id="supabaseSqlSnippet">create table if not exists ototku_sync (
+  user_id text primary key,
+  data jsonb not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+alter table ototku_sync enable row level security;
+create policy "Public Access" on ototku_sync for all using (true) with check (true);</div>
+            <button type="button" class="btn btn-sm btn-soft mt" data-action="copySqlSnippet">📋 Salin Skrip SQL</button>
+          </div>
+        </div>
+
+        <!-- FIREBASE INPUTS -->
+        <div id="firebaseFields" style="${(c.provider || 'supabase') === 'firebase' ? '' : 'display:none'}">
+          <label class="field">
+            <span>Firebase Database URL atau Config JSON</span>
+            <textarea class="input" name="firebaseConfig" rows="3" placeholder='https://proyek-kamu.firebaseio.com atau {"apiKey":"...","databaseURL":"..."}'>${esc(typeof c.firebaseConfig === 'object' ? JSON.stringify(c.firebaseConfig) : c.firebaseConfig || '')}</textarea>
+          </label>
+          <div class="hint">
+            <b>Panduan Firebase:</b> Buat project di <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:700">Firebase Console</a>, aktifkan <b>Realtime Database</b> dalam mode uji (test mode), lalu masukkan URL database di atas.
+          </div>
+        </div>
+
+        <div class="row between wrap mt">
+          <label class="row" style="cursor:pointer;font-size:.88rem">
+            <input type="checkbox" name="cloudEnabled" ${c.enabled ? 'checked' : ''} style="width:18px;height:18px">
+            <b>Aktifkan Sinkronisasi Cloud Otomatis</b>
+          </label>
+        </div>
+
+        <div class="btn-row mt">
+          <button class="btn btn-primary grow" type="submit" id="saveCloudBtn">💾 Simpan Konfigurasi Cloud</button>
+          <button class="btn" type="button" data-action="testSyncNow" id="testSyncBtn">🔄 Sinkronkan Sekarang</button>
+        </div>
+        ${c.lastSyncedAt ? `<p class="muted small mt" style="text-align:right">Terakhir sinkron: ${new Date(c.lastSyncedAt).toLocaleString('id-ID')}</p>` : ''}
+      </form>
+    </div>
+
+    <!-- PROFIL & TARGET -->
+    <form class="card" data-form="settings" id="settingsForm" novalidate>
+      <h3 class="card-title">👤 Profil & target</h3>
+      <div class="form-grid">
+        <label class="field"><span>Berat badan (kg)</span><input class="input" type="number" step="0.1" min="20" inputmode="decimal" name="weight" value="${s.weight}" data-input="weightRecalc" id="setWeight"></label>
+        <label class="field"><span>Tujuan</span><input class="input" type="text" name="goal" value="${esc(s.goal)}"></label>
+      </div>
+      <p class="hint">Target protein dihitung ulang otomatis saat berat diubah: ${fmtNum(s.proteinFactorMin, 1)}–${fmtNum(s.proteinFactorMax, 1)} g/kg (ideal ${fmtNum(s.proteinFactorIdeal, 1)} g/kg). Nilai tetap bisa diubah manual.</p>
+      <div class="form-grid three">
+        ${nf('proteinMin', 'Protein min (g)', s.proteinMin, '1', 'setPMin')}
+        ${nf('proteinTarget', 'Protein ideal (g)', s.proteinTarget, '1', 'setPTarget')}
+        ${nf('proteinMax', 'Protein maks (g)', s.proteinMax, '1', 'setPMax')}
+        ${nf('calorieTarget', 'Kalori (kkal)', s.calorieTarget, '10')}
+        ${nf('satFatLimit', 'Batas lemak jenuh (g)', s.satFatLimit, '0.5')}
+        ${nf('budget', 'Anggaran/hari (Rp)', s.budget, '500')}
+      </div>
+      <h3 class="card-title mt">🏋️ Gym</h3>
+      <div class="form-grid">
+        ${nf('restSeconds', 'Timer istirahat (detik)', s.restSeconds, '5')}
+        <label class="field"><span>Dumbbell tersedia (kg)</span><input class="input" type="text" name="dumbbells" value="${s.dumbbells.join(', ')}" placeholder="6, 8, 9, 10, 15, 20"></label>
+      </div>
+      <button class="btn btn-primary btn-block mt" type="submit" id="saveSettingsBtn">Simpan pengaturan profil</button>
+    </form>
+
+    <div class="card">
+      <h3 class="card-title">🎨 Tampilan</h3>
+      ${seg([['auto', '🖥️ Otomatis'], ['light', '☀️ Terang'], ['dark', '🌙 Gelap']], s.theme, 'setTheme')}
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">💾 Cadangan File Lokal</h3>
+      <p class="muted small mb">Selain cloud, Anda selalu bisa mengunduh file cadangan mandiri atau memulihkan data melalui file JSON.</p>
+      <div class="form-grid">
+        <button class="btn" data-action="exportData" id="exportBtn">⬇️ Export JSON</button>
+        <button class="btn" data-action="importData" id="importBtn">⬆️ Import JSON</button>
+      </div>
+      <div class="divider"></div>
+      ${hasSampleData()
+        ? '<button class="btn btn-danger-soft btn-block" data-action="clearSample" id="clearSampleBtn">🧹 Hapus data contoh</button>'
+        : '<button class="btn btn-block" data-action="loadSample" id="loadSampleBtn">✨ Muat data contoh (7 hari)</button>'}
+      <button class="btn btn-danger-soft btn-block mt" data-action="resetAll" id="resetAllBtn">⚠️ Reset semua data</button>
+    </div>
+    <p class="foot-note">OtotKu · ${fmtNum(Store.size() / 1024, 1)} KB lokal tersimpan · dibuat dengan ❤️ untuk progres Anda</p>`;
+}
+
+/* =========================================================
+   9. GRAFIK (Chart.js)
+   ========================================================= */
+const charts = {};
+const palette = () => PALETTE[isDark() ? 'dark' : 'light'];
+
+function makeChart(id, config, hasData = true) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const box = canvas.parentElement;
+  box.querySelectorAll('.chart-empty').forEach(n => n.remove());
+  if (typeof Chart === 'undefined') {
+    box.insertAdjacentHTML('beforeend', '<div class="chart-empty">Grafik tidak dapat dimuat.<br>Periksa koneksi internet (Chart.js dari cdnjs).</div>');
+    return;
+  }
+  if (!hasData) box.insertAdjacentHTML('beforeend', '<div class="chart-empty">Belum ada data untuk ditampilkan</div>');
+  charts[id] = new Chart(canvas, config);
+}
+
+function gradientFill(color) {
+  return ctx => {
+    const { chart } = ctx, area = chart.chartArea;
+    if (!area) return rgba(color, 0.15);
+    const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, rgba(color, 0.32)); g.addColorStop(1, rgba(color, 0));
+    return g;
+  };
+}
+
+function baseOptions(c, yExtra = {}) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: c.text, usePointStyle: true, boxWidth: 8, padding: 14 } },
+      tooltip: { backgroundColor: isDark() ? '#eceefa' : '#141a2e', titleColor: isDark() ? '#141a2e' : '#fff', bodyColor: isDark() ? '#141a2e' : '#fff', padding: 10, cornerRadius: 10 },
+    },
+    scales: {
+      x: { ticks: { color: c.text, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+      y: { ticks: { color: c.text }, grid: { color: c.grid }, border: { display: false }, ...yExtra },
+    },
+  };
+}
+const lineDs = (label, data, color, extra = {}) => ({
+  label, data, borderColor: rgba(color), backgroundColor: gradientFill(color), fill: true, tension: 0.35,
+  pointRadius: 3.5, pointHoverRadius: 6, pointBackgroundColor: rgba(color), borderWidth: 2.5, spanGaps: true, ...extra,
+});
+const targetDs = (label, value, n, color, dash = [6, 6]) => ({
+  label, data: Array(n).fill(value), borderColor: rgba(color, 0.9), borderDash: dash, pointRadius: 0, borderWidth: 2, fill: false, type: 'line',
+});
+
+function maxWeightSeries(name) {
+  const labels = [], data = []; let unit = 'kg';
+  Object.keys(state.sessions).sort().forEach(d => {
+    state.sessions[d].entries.filter(e => e.name === name).forEach(e => {
+      const done = e.sets.filter(s => s.done);
+      if (!done.length) return;
+      if (e.unit === 'detik') { unit = 'detik'; data.push(Math.max(...done.map(s => num(s.reps)))); }
+      else data.push(Math.max(...done.map(s => num(s.weight))));
+      labels.push(fmtDateShort(d));
+    });
+  });
+  return { labels, data, unit };
+}
+
+function drawCharts() {
+  const c = palette(), s = state.settings, today = todayStr();
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+    Chart.defaults.color = c.text;
+  }
+  const N = ui.chartRange;
+  const days = Array.from({ length: N }, (_, i) => addDays(today, i - N + 1));
+  const dayLabels = days.map(fmtDateShort);
+
+  const logs = sortedLogs();
+  makeChart('chartWeight', { type: 'line',
+    data: { labels: logs.map(l => fmtDateShort(l.date)), datasets: [lineDs('Berat (kg)', logs.map(l => l.weight), c.primary)] },
+    options: baseOptions(c, { suggestedMin: logs.length ? Math.min(...logs.map(l => l.weight)) - 1 : 50, suggestedMax: logs.length ? Math.max(...logs.map(l => l.weight)) + 1 : 60 }) }, logs.length > 0);
+
+  if (document.getElementById('chartMeasure')) {
+    const ml = logs.filter(l => l.arm || l.chest || l.thigh);
+    const ds = (label, key, color) => lineDs(label, ml.map(l => l[key] || null), color, { fill: false });
+    makeChart('chartMeasure', { type: 'line',
+      data: { labels: ml.map(l => fmtDateShort(l.date)), datasets: [ds('Lengan', 'arm', c.primary), ds('Dada', 'chest', c.cyan), ds('Paha', 'thigh', c.pink)] },
+      options: baseOptions(c) }, ml.length > 0);
+  }
+
+  const prot = days.map(d => hasMeals(d) ? round1(dayTotals(d).protein) : null);
+  makeChart('chartProtein', { type: 'line',
+    data: { labels: dayLabels, datasets: [
+      lineDs('Protein (g)', prot, c.primary, { pointBackgroundColor: prot.map(v => v != null && v >= s.proteinMin ? rgba(c.ok) : rgba(c.warn)), pointRadius: 4.5 }),
+      targetDs(`Ideal ${s.proteinTarget} g`, s.proteinTarget, N, c.ok),
+      targetDs(`Minimal ${s.proteinMin} g`, s.proteinMin, N, c.warn, [2, 4]),
+    ] },
+    options: baseOptions(c, { suggestedMin: 0, suggestedMax: s.proteinMax }) }, prot.some(v => v != null));
+
+  const kcal = days.map(d => hasMeals(d) ? Math.round(dayTotals(d).kcal) : null);
+  makeChart('chartKcal', { type: 'line',
+    data: { labels: dayLabels, datasets: [lineDs('Kalori (kkal)', kcal, c.cyan), targetDs(`Target ${fmtNum(s.calorieTarget)}`, s.calorieTarget, N, c.ok)] },
+    options: baseOptions(c, { suggestedMin: 0, suggestedMax: s.calorieTarget * 1.2 }) }, kcal.some(v => v != null));
+
+  drawMaxChart();
+
+  const thisWeek = weekStart(today);
+  const weeks = Array.from({ length: 8 }, (_, i) => addDays(thisWeek, (i - 7) * 7));
+  const target = weeklySessionTarget();
+  const sessCount = weeks.map(sessionsInWeek);
+  makeChart('chartSessions', { type: 'bar',
+    data: { labels: weeks.map(fmtDateShort), datasets: [
+      { label: 'Sesi selesai', data: sessCount, backgroundColor: sessCount.map(v => v >= target ? rgba(c.ok, 0.85) : rgba(c.primary, 0.75)), borderRadius: 8, maxBarThickness: 34 },
+      targetDs(`Target ${target}`, target, 8, c.warn),
+    ] },
+    options: baseOptions(c, { beginAtZero: true, suggestedMax: target + 1, ticks: { color: c.text, stepSize: 1 } }) }, true);
+
+  const wkBudget = s.budget * 7;
+  const costs = weeks.map(w => Math.round(rangeTotals(w, addDays(w, 6)).cost));
+  const costOpts = baseOptions(c, { beginAtZero: true, ticks: { color: c.text, callback: v => fmtRpShort(v) } });
+  costOpts.plugins.tooltip.callbacks = { label: ctx => `${ctx.dataset.label}: ${fmtRp(ctx.parsed.y)}` };
+  makeChart('chartCost', { type: 'bar',
+    data: { labels: weeks.map(fmtDateShort), datasets: [
+      { label: 'Biaya makan', data: costs, backgroundColor: costs.map(v => v > wkBudget ? rgba(c.bad, 0.8) : rgba(c.cyan, 0.75)), borderRadius: 8, maxBarThickness: 34 },
+      targetDs('Anggaran', wkBudget, 8, c.warn),
+    ] },
+    options: costOpts }, costs.some(v => v > 0));
+}
+
+function drawMaxChart() {
+  const c = palette();
+  const ser = maxWeightSeries(ui.chartExercise);
+  makeChart('chartMax', { type: 'line',
+    data: { labels: ser.labels, datasets: [lineDs(`${ui.chartExercise || ''} (${ser.unit})`, ser.data, c.pink, { stepped: false, pointRadius: 5 })] },
+    options: baseOptions(c, { suggestedMin: 0, suggestedMax: ser.data.length ? Math.max(...ser.data) + (ser.unit === 'kg' ? 5 : 10) : 20 }) }, ser.data.length > 0);
+}
+
+/* =========================================================
+   10. EVENT HANDLER & ROUTING
+   ========================================================= */
+function go(page) {
+  if (!PAGES.includes(page)) page = 'dashboard';
+  const changed = ui.page !== page;
+  ui.page = page;
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+  $$('.tab').forEach(t => { const on = t.dataset.page === page; t.classList.toggle('active', on); on ? t.setAttribute('aria-current', 'page') : t.removeAttribute('aria-current'); });
+  renderCurrent();
+  if (changed) window.scrollTo({ top: 0 });
+}
+function navigate(page) { if (location.hash !== '#' + page) location.hash = page; else go(page); }
+function renderCurrent() {
+  ({ dashboard: renderDashboard, makan: renderMeals, gym: renderGym, progres: renderProgress, pengaturan: renderSettings })[ui.page]();
+}
+
+function findMealEntry(id) {
+  const list = state.meals[ui.mealDate] || [];
+  return { list, idx: list.findIndex(e => e.id === id) };
+}
+function removeMealEntry(id) {
+  const { list, idx } = findMealEntry(id);
+  if (idx < 0) return;
+  const [removed] = list.splice(idx, 1);
+  const date = ui.mealDate;
+  if (!list.length) delete state.meals[date];
+  save(); renderMeals();
+  toast(`${esc(removed.name)} dihapus`, '', { label: 'Batalkan', fn: () => {
+    (state.meals[date] = state.meals[date] || []).splice(idx, 0, removed); save(); renderCurrent();
+  } });
+}
+function applyTemplateTo(date) {
+  const entries = [];
+  MEAL_SLOTS.forEach(sl => (state.template[sl.id] || []).forEach(t => {
+    const f = findFood(t.foodId);
+    if (f) entries.push(makeMealEntry(f, sl.id, t.qty));
+  }));
+  state.meals[date] = entries;
+  save();
+  const t = dayTotals(date);
+  toast(`⚡ Menu diterapkan: ${fmtNum(t.protein, 1)} g protein · ${fmtRp(t.cost)}`, 'ok');
+}
+
+const actions = {
+  nav: el => navigate(el.dataset.page),
+  toggleTheme: () => { state.settings.theme = isDark() ? 'light' : 'dark'; save(); applyTheme(); renderCurrent(); },
+  closeModal: () => closeModal(),
+  dateShift: el => { const k = el.dataset.scope + 'Date'; ui[k] = addDays(ui[k], +el.dataset.dir); renderCurrent(); },
+  dateToday: el => { ui[el.dataset.scope + 'Date'] = todayStr(); renderCurrent(); },
+
+  // Cloud badge quick modal
+  quickSyncModal: () => {
+    const c = state.settings.cloud || {};
+    openModal({
+      title: '☁️ Status Sinkronisasi Cloud',
+      body: `
+        <p style="margin-bottom:12px">Status saat ini: <b>${esc(Cloud.statusMsg)}</b></p>
+        <p class="small muted" style="margin-bottom:12px">Provider: <b>${esc(c.provider || 'Belum diatur')}</b> · Kunci: <code>${esc(c.syncKey || '-')}</code></p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary grow" data-action="testSyncNow">🔄 Sinkronkan Sekarang</button>
+          <button type="button" class="btn grow" data-action="openCloudConfig">⚙️ Pengaturan Cloud</button>
+        </div>`,
+      foot: '<button class="btn" type="button" data-action="closeModal">Tutup</button>',
+    });
+  },
+
+  // Modal Buka di HP / Perangkat Lain
+  openDeviceModal: () => {
+    const isFile = location.protocol === 'file:';
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    
+    // Perkiraan URL yang bisa dibuka dari HP
+    let targetUrl = location.href;
+    let noticeHtml = '';
+
+    if (isFile) {
+      targetUrl = 'http://192.168.1.9:8000';
+      noticeHtml = `
+        <div class="card" style="background:var(--warn-soft);border-color:var(--warn);margin-bottom:14px;padding:12px">
+          <b>⚠️ Anda sedang membuka file lokal secara langsung (file://)</b>
+          <p class="small mt" style="margin-bottom:6px">Agar HP dan tablet bisa mengakses:</p>
+          <ol class="small" style="padding-left:18px;margin-bottom:4px">
+            <li>Buka folder project di laptop Anda.</li>
+            <li>Klik dua kali file <b>jalankan_server.bat</b>.</li>
+            <li>Arahkan kamera HP ke QR Code yang tampil di jendela hitam tersebut atau buka di browser HP!</li>
+          </ol>
+        </div>`;
+    } else if (isLocalhost) {
+      noticeHtml = `
+        <p class="small muted mb">
+          💡 Pastikan HP dan laptop terhubung ke <b>Wi-Fi yang sama</b>. Jika HP tidak bisa membuka alamat <i>localhost</i>, gunakan alamat IP laptop (misal: <code>http://192.168.1.9:${location.port || '8000'}</code>).
+        </p>`;
+    }
+
+    openModal({
+      title: '📱 Buka di HP / Perangkat Lain',
+      body: `
+        ${noticeHtml}
+        <div style="display:flex;flex-direction:column;align-items:center;margin:6px 0 16px">
+          <div class="qr-modal-box" id="deviceQrContainer"></div>
+          <div class="row" style="margin-top:12px;width:100%;max-width:340px;gap:6px">
+            <input class="input input-sm" id="deviceUrlField" type="text" value="${esc(targetUrl)}" readonly style="text-align:center;font-weight:700">
+            <button type="button" class="btn btn-sm btn-primary" data-action="copyDeviceUrl">Salin</button>
+          </div>
+        </div>
+
+        <div class="card" style="padding:14px;margin-bottom:12px">
+          <h4 style="font-size:.92rem;margin-bottom:8px">📲 Cara Pasang di Layar Utama HP (PWA):</h4>
+          <div class="small" style="line-height:1.6">
+            <p><b>• Android (Chrome / Edge):</b> Ketuk menu titik tiga (⋮) di kanan atas browser → pilih <b>"Instal aplikasi"</b> atau <b>"Tambahkan ke Layar Utama"</b>.</p>
+            <p class="mt" style="margin-top:8px"><b>• iPhone / iPad (Safari):</b> Ketuk tombol <b>Bagikan (Share)</b> di bagian bawah (kotak dengan panah ke atas) → geser ke bawah → pilih <b>"Tambah ke Layar Utama" (Add to Home Screen)</b>.</p>
+          </div>
+        </div>
+
+        <div class="card" style="padding:14px">
+          <h4 style="font-size:.92rem;margin-bottom:6px">☁️ Sinkronisasi Data Antar-Perangkat</h4>
+          <p class="small muted">Data latihan & makan Anda bisa otomatis terhubung antara laptop dan HP dengan mengaktifkan <b>Sinkronisasi Cloud (Supabase/Firebase)</b> di menu Pengaturan.</p>
+        </div>
+      `,
+      foot: '<button class="btn" type="button" data-action="closeModal">Tutup</button>'
+    });
+
+    // Render QR Code
+    setTimeout(() => {
+      const box = $('#deviceQrContainer');
+      if (box) {
+        box.innerHTML = '';
+        if (typeof QRCode !== 'undefined') {
+          try {
+            new QRCode(box, {
+              text: targetUrl,
+              width: 160,
+              height: 160,
+              colorDark: '#141a2e',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+          } catch (e) {
+            console.error('QR render error:', e);
+            box.innerHTML = '<span class="small muted">Gunakan tautan di bawah</span>';
+          }
+        } else {
+          box.innerHTML = '<span class="small muted">Gunakan tautan di bawah</span>';
+        }
+      }
+    }, 60);
+  },
+
+  copyDeviceUrl: () => {
+    const f = $('#deviceUrlField');
+    if (f && f.value) {
+      navigator.clipboard?.writeText(f.value);
+      toast('📋 Tautan berhasil disalin!', 'ok');
+    }
+  },
+
+  openDeployGuide: () => {
+    openModal({
+      title: '🌐 Akses Online Gratis dari Mana Saja',
+      body: `
+        <p class="small muted mb">Jika Anda ingin membuka OtotKu di HP tanpa perlu laptop menyala atau tanpa harus berada di satu jaringan Wi-Fi:</p>
+        
+        <div class="card" style="padding:12px;margin-bottom:10px">
+          <h4 style="font-size:.92rem;color:var(--primary);margin-bottom:4px">1. Netlify Drop (Paling Mudah — 30 Detik Tanpa Koding)</h4>
+          <ol class="small" style="padding-left:18px;line-height:1.6">
+            <li>Buka <a href="https://app.netlify.com/drop" target="_blank" rel="noopener noreferrer" style="color:var(--primary);font-weight:700">app.netlify.com/drop</a> di laptop.</li>
+            <li>Tarik & lepaskan (drag and drop) seluruh folder <code>fitness tracking</code> ke halaman tersebut.</li>
+            <li>Selesai! Anda langsung mendapatkan link permanen (contoh: <code>https://ototku.netlify.app</code>) yang bisa dibuka kapan saja dari HP!</li>
+          </ol>
+        </div>
+
+        <div class="card" style="padding:12px;margin-bottom:10px">
+          <h4 style="font-size:.92rem;color:var(--primary-2);margin-bottom:4px">2. Vercel atau GitHub Pages</h4>
+          <p class="small muted">Karena OtotKu adalah aplikasi web murni (HTML, CSS, JS), Anda juga bisa mengunggahnya ke GitHub dan mengaktifkan <b>GitHub Pages</b> secara gratis selamanya.</p>
+        </div>
+
+        <p class="small hint">💡 Catatan: Karena OtotKu sudah mendukung <b>PWA (Progressive Web App)</b>, setelah di-deploy ke online, web ini bisa di-instal langsung seperti aplikasi native di smartphone Anda!</p>
+      `,
+      foot: '<button class="btn" type="button" data-action="closeModal">Tutup</button>'
+    });
+  },
+  openCloudConfig: () => {
+    closeModal();
+    navigate('pengaturan');
+    setTimeout(() => {
+      const f = $('#cloudSettingsForm');
+      if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  },
+  copySyncKey: () => {
+    const k = $('#cloudSyncKey')?.value || state.settings.cloud?.syncKey;
+    if (k) {
+      navigator.clipboard?.writeText(k);
+      toast('📋 Kunci sinkronisasi disalin!', 'ok');
+    }
+  },
+  newSyncKey: async () => {
+    if (!(await confirmDialog('Buat Kunci Sinkronisasi baru? Jika diubah, data cloud lama tidak akan diakses kecuali Anda memasukkan kuncinya kembali.', { ok: 'Buat Baru' }))) return;
+    const nk = 'otot_' + Math.random().toString(36).slice(2, 9);
+    state.settings.cloud.syncKey = nk;
+    $('#cloudSyncKey').value = nk;
+    save();
+    toast('Kunci baru dibuat: ' + nk, 'ok');
+  },
+  copySqlSnippet: () => {
+    const txt = $('#supabaseSqlSnippet')?.textContent;
+    if (txt) {
+      navigator.clipboard?.writeText(txt);
+      toast('📋 Skrip SQL Supabase berhasil disalin!', 'ok');
+    }
+  },
+  cloudProviderSelect: el => {
+    const prov = el.dataset.value;
+    state.settings.cloud.provider = prov;
+    $('#supabaseFields').style.display = prov === 'supabase' ? '' : 'none';
+    $('#firebaseFields').style.display = prov === 'firebase' ? '' : 'none';
+    $$('[data-action="cloudProviderSelect"]').forEach(b => b.classList.toggle('active', b.dataset.value === prov));
+  },
+  testSyncNow: async () => {
+    toast('🔄 Menghubungkan ke Cloud...', '');
+    Cloud.setupClient();
+    await Cloud.pull({ manual: true });
+  },
+
+  // Movement guide modal
+  openMovementGuide: el => openMovementGuide(+el.dataset.ex),
+  switchGuideMedia: el => {
+    const container = $('#guideMediaContainer');
+    const type = el.dataset.type;
+    $$('#btnShowVideo, #btnShowPhoto').forEach(b => b.classList.toggle('btn-soft', b === el));
+    if (type === 'video') {
+      const v = el.dataset.v;
+      container.innerHTML = `<iframe src="${esc(v)}" title="Tutorial video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    } else {
+      const img = el.dataset.img;
+      container.innerHTML = `<img src="${esc(img)}" alt="Foto gerakan" style="width:100%;height:100%;object-fit:cover">`;
+    }
+  },
+
+  // Dashboard
+  startWorkout: () => { ui.gymDate = todayStr(); ui.gymTab = 'sesi'; navigate('gym'); },
+  goMeals: () => { ui.mealDate = todayStr(); ui.mealTab = 'log'; navigate('makan'); },
+  goWeight: () => { navigate('progres'); setTimeout(() => { const i = $('#weightInput'); if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus({ preventScroll: true }); } }, 120); },
+  applyTemplateToday: () => { applyTemplateTo(todayStr()); renderDashboard(); },
+
+  // Makan
+  mealTab: el => { ui.mealTab = el.dataset.value; renderMeals(); },
+  openAddFood: el => openAddFood(el.dataset.slot),
+  addFood: el => {
+    const f = findFood(el.dataset.id); if (!f) return;
+    const list = (state.meals[ui.mealDate] = state.meals[ui.mealDate] || []);
+    const existing = list.find(e => e.foodId === f.id && e.slot === ui.addSlot && !e.sample);
+    if (existing) existing.qty += 1; else list.push(makeMealEntry(f, ui.addSlot, 1));
+    save(); renderMeals();
+    el.animate([{ transform: 'scale(.97)' }, { transform: 'scale(1)' }], { duration: 200 });
+    toast(`✓ ${esc(f.name)} ditambahkan`, 'ok');
+  },
+  qtyStep: el => {
+    const { list, idx } = findMealEntry(el.dataset.id); if (idx < 0) return;
+    const q = round1(list[idx].qty + Number(el.dataset.d));
+    if (q <= 0) return removeMealEntry(el.dataset.id);
+    list[idx].qty = q; save(); renderMeals();
+  },
+  delEntry: el => removeMealEntry(el.dataset.id),
+  applyTemplate: async () => {
+    const date = ui.mealDate;
+    if (hasMeals(date) && !(await confirmDialog('Catatan pada tanggal ini akan diganti dengan "Menu Harian Saya". Lanjutkan?', { ok: 'Ganti' }))) return;
+    applyTemplateTo(date); renderMeals();
+  },
+  copyYesterday: async () => {
+    const date = ui.mealDate, src = state.meals[addDays(date, -1)] || [];
+    if (!src.length) return toast('Tidak ada catatan pada hari sebelumnya', 'warn');
+    if (hasMeals(date) && !(await confirmDialog('Ganti catatan hari ini dengan salinan hari sebelumnya?', { ok: 'Ganti' }))) return;
+    state.meals[date] = src.map(e => { const c = { ...e, id: uid() }; delete c.sample; return c; });
+    save(); renderMeals(); toast('📋 Catatan kemarin disalin', 'ok');
+  },
+  saveTemplate: async () => {
+    const list = state.meals[ui.mealDate] || [];
+    if (!list.length) return toast('Catat makanan dulu sebelum menjadikannya template', 'warn');
+    if (!(await confirmDialog('Jadikan menu tanggal ini sebagai "Menu Harian Saya"?', { ok: 'Simpan template' }))) return;
+    const tpl = { pagi: [], sore: [], malam: [] };
+    list.forEach(e => { if (findFood(e.foodId) && tpl[e.slot]) {
+      const ex = tpl[e.slot].find(t => t.foodId === e.foodId);
+      if (ex) ex.qty += e.qty; else tpl[e.slot].push({ foodId: e.foodId, qty: e.qty });
+    } });
+    state.template = tpl; save(); toast('💾 Template diperbarui', 'ok');
+  },
+  openFoodForm: el => openFoodForm(el.dataset.id, !!el.dataset.fromAdd),
+  backToAdd: () => openAddFood(ui.addSlot),
+  delFood: async el => {
+    const f = findFood(el.dataset.id); if (!f) return;
+    if (!(await confirmDialog(`Hapus "${esc(f.name)}" dari database? Catatan lama tetap tersimpan.`, { ok: 'Hapus', danger: true }))) return;
+    state.foods = state.foods.filter(x => x.id !== f.id);
+    MEAL_SLOTS.forEach(sl => { state.template[sl.id] = (state.template[sl.id] || []).filter(t => t.foodId !== f.id); });
+    save(); renderMeals(); toast('Makanan dihapus');
+  },
+
+  // Gym
+  gymTab: el => { ui.gymTab = el.dataset.value; renderGym(); },
+  timerStart: () => Timer.start(state.settings.restSeconds),
+  timerAdd: el => Timer.add(Number(el.dataset.sec)),
+  timerStop: () => Timer.stop(),
+  finishSession: () => {
+    const sess = commitSession(ui.gymDate) || state.sessions[ui.gymDate]; if (!sess) return;
+    sess.completed = !sess.completed;
+    save(); renderGym();
+    if (sess.completed) {
+      const p = sessionProgress(sess);
+      toast(`🎉 Sesi selesai! ${p.done}/${p.total} set · minggu ini ${sessionsInWeek(weekStart(todayStr()))}/${weeklySessionTarget()}`, 'ok');
+      Timer.stop();
+    }
+  },
+  editEx: el => openExerciseForm(el.dataset.wid, el.dataset.exid),
+  delEx: async el => {
+    const w = state.program.workouts[el.dataset.wid], e = w.exercises.find(x => x.id === el.dataset.exid);
+    if (!(await confirmDialog(`Hapus latihan "${esc(e.name)}" dari ${esc(w.name)}?`, { ok: 'Hapus', danger: true }))) return;
+    w.exercises = w.exercises.filter(x => x.id !== e.id); ui.draft = null; save(); renderGym();
+  },
+  moveEx: el => {
+    const list = state.program.workouts[el.dataset.wid].exercises, i = +el.dataset.idx, j = i + Number(el.dataset.dir);
+    if (j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]]; ui.draft = null; save(); renderGym();
+  },
+  editWorkout: el => openWorkoutForm(el.dataset.wid),
+  delWorkout: async el => {
+    const wid = el.dataset.wid, w = state.program.workouts[wid];
+    if (!(await confirmDialog(`Hapus hari latihan "${esc(w.name)}"? Jadwal yang memakainya akan menjadi istirahat. Riwayat sesi tetap tersimpan.`, { ok: 'Hapus', danger: true }))) return;
+    delete state.program.workouts[wid];
+    Object.keys(state.program.schedule).forEach(d => { if (state.program.schedule[d] === wid) state.program.schedule[d] = 'rest'; });
+    ui.draft = null; save(); renderGym();
+  },
+
+  // Progres
+  chartRange: el => { ui.chartRange = Number(el.dataset.value); renderProgress(); },
+  delLog: async el => {
+    if (!(await confirmDialog('Hapus catatan berat badan ini?', { ok: 'Hapus', danger: true }))) return;
+    state.bodyLogs = state.bodyLogs.filter(l => l.id !== el.dataset.id); save(); renderProgress();
+  },
+
+  // Pengaturan
+  setTheme: el => { state.settings.theme = el.dataset.value; save(); applyTheme(); renderSettings(); },
+  exportData: () => {
+    try {
+      const blob = new Blob([JSON.stringify({ app: 'OtotKu', exportedAt: new Date().toISOString(), ...state }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ototku-backup-${todayStr()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      toast('⬇️ Data diekspor', 'ok');
+    } catch (err) { console.error(err); toast('Gagal mengekspor data', 'bad'); }
+  },
+  importData: () => $('#importFile').click(),
+  clearSample: async () => {
+    if (!(await confirmDialog('Hapus semua data contoh? Data yang Anda masukkan sendiri tetap aman.', { ok: 'Hapus data contoh', danger: true }))) return;
+    removeSampleData(); renderSettings(); toast('🧹 Data contoh dihapus', 'ok');
+  },
+  loadSample: () => { generateSampleData(); save(); renderSettings(); toast('✨ Data contoh dimuat', 'ok'); },
+  resetAll: async () => {
+    if (!(await confirmDialog('Semua data (makan, gym, berat, pengaturan) akan dihapus permanen. Export dulu jika perlu. Lanjutkan?', { ok: 'Reset semua', danger: true }))) return;
+    const theme = state.settings.theme;
+    state = createDefaultState(); state.settings.theme = theme;
+    ui.draft = null; ui.gymOverride = {};
+    save(); applyTheme(); renderSettings(); toast('Data direset');
+  },
+};
+
+const changes = {
+  dateSet: el => { if (el.value) { ui[el.dataset.scope + 'Date'] = el.value; renderCurrent(); } },
+  qtySet: el => {
+    const v = round1(num(el.value));
+    if (v <= 0) return removeMealEntry(el.dataset.id);
+    const { list, idx } = findMealEntry(el.dataset.id); if (idx < 0) return;
+    list[idx].qty = v; save(); renderMeals();
+  },
+  gymWorkout: async el => {
+    const date = ui.gymDate, val = el.value, existing = state.sessions[date];
+    if (existing) {
+      const hasData = existing.entries.some(e => e.sets.some(s => s.done));
+      if (hasData && !(await confirmDialog('Sesi ini sudah berisi data. Mengganti latihan akan menghapus data sesi tanggal ini. Lanjutkan?', { ok: 'Ganti', danger: true }))) { renderGym(); return; }
+      delete state.sessions[date]; save();
+    }
+    ui.gymOverride[date] = val; ui.draft = null; renderGym();
+  },
+  restQuick: el => { state.settings.restSeconds = Number(el.value); save(); toast(`⏱ Timer istirahat: ${el.value} detik`); },
+  toggleSet: el => {
+    const i = +el.dataset.ex, j = +el.dataset.set;
+    const sess = commitSession(ui.gymDate); if (!sess) return;
+    const en = sess.entries[i], set = en.sets[j], row = el.closest('.set-row');
+    set.done = el.checked;
+    const w = row.querySelector('[data-field="weight"]'); if (w) set.weight = num(w.value);
+    if (set.done && (set.reps === '' || set.reps == null)) {
+      set.reps = en.repMin;
+      const r = row.querySelector('[data-field="reps"]'); if (r) r.value = set.reps;
+    }
+    row.classList.toggle('done', set.done);
+    save();
+    const p = refreshSessionProgress(sess);
+    if (set.done) {
+      if (p.done === p.total) { Timer.stop(); toast('💪 Semua set selesai! Tekan "Selesaikan sesi".', 'ok'); }
+      else Timer.start(state.settings.restSeconds);
+    }
+  },
+  setField: el => {
+    const sess = commitSession(ui.gymDate); if (!sess) return;
+    const set = sess.entries[+el.dataset.ex].sets[+el.dataset.set];
+    set[el.dataset.field] = el.dataset.field === 'weight' ? num(el.value) : (el.value === '' ? '' : Math.max(0, Math.round(num(el.value))));
+    save();
+  },
+  exNote: el => { const sess = commitSession(ui.gymDate); if (sess) { sess.entries[+el.dataset.ex].note = el.value.trim(); save(); } },
+  sessionNote: el => { const sess = commitSession(ui.gymDate); if (sess) { sess.notes = el.value.trim(); save(); } },
+  schedule: el => { state.program.schedule[el.dataset.day] = el.value; ui.draft = null; save(); renderGym(); toast('📅 Jadwal diperbarui'); },
+  chartExercise: el => { ui.chartExercise = el.value; drawMaxChart(); },
+};
+
+const inputs = {
+  foodSearch: el => { $('#foodPickList').innerHTML = foodPickHtml(el.value); },
+  weightRecalc: el => {
+    const w = num(el.value), s = state.settings;
+    if (w < 20) return;
+    $('#setPMin').value = Math.round(w * s.proteinFactorMin);
+    $('#setPMax').value = Math.round(w * s.proteinFactorMax);
+    $('#setPTarget').value = Math.round(w * s.proteinFactorIdeal);
+  },
+};
+
+const forms = {
+  food: f => {
+    const d = formData(f), name = (d.name || '').trim();
+    if (!name) return toast('Nama makanan wajib diisi', 'warn');
+    const food = { id: d.id || 'f_' + uid(), name, portion: (d.portion || '1 porsi').trim(),
+      protein: num(d.protein), kcal: num(d.kcal), satFat: num(d.satFat), priceMin: num(d.priceMin), priceMax: num(d.priceMax) };
+    const idx = state.foods.findIndex(x => x.id === food.id);
+    if (idx >= 0) state.foods[idx] = { ...state.foods[idx], ...food }; else state.foods.push(food);
+    save(); toast(`✓ ${esc(name)} disimpan`, 'ok');
+    renderMeals();
+    if (ui.foodFormFromAdd) openAddFood(ui.addSlot); else closeModal();
+  },
+  exercise: f => {
+    const d = formData(f), w = state.program.workouts[d.wid];
+    const name = (d.name || '').trim();
+    if (!name) return toast('Nama latihan wajib diisi', 'warn');
+    const repMin = Math.max(1, Math.round(num(d.repMin, 1))), wMin = num(d.wMin);
+    const e = {
+      id: d.exid || uid(), name, sets: Math.min(10, Math.max(1, Math.round(num(d.sets, 3)))),
+      repMin, repMax: Math.max(repMin, Math.round(num(d.repMax, repMin))), unit: d.unit === 'detik' ? 'detik' : 'rep',
+      perSide: d.perSide || '', wMin, wMax: Math.max(wMin, num(d.wMax)),
+      target: (d.target || '').trim(), media: (d.media || '').trim(), video: (d.video || '').trim(),
+      cues: (d.cues || '').trim(), mistakes: (d.mistakes || '').trim()
+    };
+    const idx = w.exercises.findIndex(x => x.id === e.id);
+    if (idx >= 0) w.exercises[idx] = e; else w.exercises.push(e);
+    ui.draft = null; save(); closeModal(); renderGym(); toast('✓ Latihan disimpan', 'ok');
+  },
+  workout: f => {
+    const d = formData(f), name = (d.name || '').trim();
+    if (!name) return toast('Nama wajib diisi', 'warn');
+    if (d.wid) Object.assign(state.program.workouts[d.wid], { name, focus: (d.focus || '').trim() });
+    else state.program.workouts['w_' + uid()] = { name, focus: (d.focus || '').trim(), exercises: [] };
+    ui.draft = null; save(); closeModal(); renderGym(); toast('✓ Disimpan', 'ok');
+  },
+  bodyLog: f => {
+    const d = formData(f), w = num(d.weight, NaN);
+    if (!(w >= 20 && w <= 300)) return toast('Masukkan berat badan yang valid', 'warn');
+    const opt = v => (v === '' || v == null) ? null : num(v);
+    const log = { id: uid(), date: d.date || todayStr(), weight: round1(w), arm: opt(d.arm), chest: opt(d.chest), thigh: opt(d.thigh) };
+    const idx = state.bodyLogs.findIndex(l => l.date === log.date);
+    if (idx >= 0) state.bodyLogs[idx] = log; else state.bodyLogs.push(log);
+    const latest = sortedLogs().pop();
+    toast('⚖️ Berat badan tersimpan', 'ok');
+    if (latest.id === log.id && log.weight !== state.settings.weight) applyWeight(log.weight, true);
+    save(); renderProgress();
+  },
+  settings: f => {
+    const d = formData(f), s = state.settings;
+    const pMin = num(d.proteinMin), pT = num(d.proteinTarget), pMax = num(d.proteinMax);
+    if (num(d.weight) < 20) return toast('Berat badan tidak valid', 'warn');
+    if (!(pMin > 0 && pMin <= pT && pT <= pMax)) return toast('Pastikan protein min ≤ ideal ≤ maks', 'warn');
+    const dbs = [...new Set(String(d.dumbbells).split(/[,;\s]+/).map(Number).filter(n => n > 0))].sort((a, b) => a - b);
+    if (!dbs.length) return toast('Masukkan minimal satu ukuran dumbbell', 'warn');
+    Object.assign(s, {
+      weight: round1(num(d.weight)), goal: (d.goal || '').trim() || DEFAULT_SETTINGS.goal,
+      proteinMin: Math.round(pMin), proteinTarget: Math.round(pT), proteinMax: Math.round(pMax),
+      calorieTarget: Math.max(0, Math.round(num(d.calorieTarget))), satFatLimit: Math.max(0, num(d.satFatLimit)),
+      budget: Math.max(0, Math.round(num(d.budget))), restSeconds: Math.max(5, Math.round(num(d.restSeconds, 90))), dumbbells: dbs,
+    });
+    ui.draft = null;
+    if (save()) toast('✓ Pengaturan profil disimpan', 'ok');
+    renderSettings();
+  },
+  cloudSettings: f => {
+    const d = formData(f);
+    const c = state.settings.cloud = state.settings.cloud || {};
+    c.syncKey = (d.syncKey || '').trim() || 'default_user';
+    c.supabaseUrl = (d.supabaseUrl || '').trim();
+    c.supabaseKey = (d.supabaseKey || '').trim();
+    c.firebaseConfig = (d.firebaseConfig || '').trim();
+    c.enabled = !!f.querySelector('input[name="cloudEnabled"]')?.checked;
+    c.autoSync = true;
+    save();
+    Cloud.setupClient();
+    toast('☁️ Konfigurasi Cloud disimpan!', 'ok');
+    if (c.enabled) {
+      Cloud.push({ manual: true });
+    }
+    renderSettings();
+  }
+};
+
+function handleImport(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let data;
+    try { data = JSON.parse(reader.result); }
+    catch (err) { return toast('File bukan JSON yang valid', 'bad'); }
+    if (!data || typeof data !== 'object' || !data.settings || !Array.isArray(data.foods)) return toast('Format data tidak dikenali', 'bad');
+    if (!(await confirmDialog('Data saat ini akan diganti dengan isi file. Lanjutkan impor?', { ok: 'Impor' }))) return;
+    delete data.app; delete data.exportedAt;
+    state = normalizeState(data);
+    ui.draft = null; ui.gymOverride = {};
+    save(); applyTheme(); renderCurrent(); toast('⬆️ Data berhasil diimpor', 'ok');
+  };
+  reader.onerror = () => toast('Gagal membaca file', 'bad');
+  reader.readAsText(file);
+}
+
+function bindEvents() {
+  document.addEventListener('click', e => {
+    if (e.target.matches('.date-display input[type="date"]')) { try { e.target.showPicker(); } catch (err) { } }
+    const el = e.target.closest('[data-action]');
+    if (!el || el.disabled) return;
+    const fn = actions[el.dataset.action];
+    if (fn) { e.preventDefault(); fn(el, e); }
+  });
+  document.addEventListener('change', e => {
+    const el = e.target.closest('[data-change]');
+    if (el && changes[el.dataset.change]) changes[el.dataset.change](el, e);
+  });
+  document.addEventListener('input', e => {
+    const el = e.target.closest('[data-input]');
+    if (el && inputs[el.dataset.input]) inputs[el.dataset.input](el, e);
+  });
+  document.addEventListener('submit', e => {
+    const f = e.target.closest('form[data-form]');
+    if (!f) return;
+    e.preventDefault();
+    if (forms[f.dataset.form]) forms[f.dataset.form](f);
+  });
+  $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+  $('#importFile').addEventListener('change', e => { handleImport(e.target.files[0]); e.target.value = ''; });
+  window.addEventListener('hashchange', () => go(location.hash.slice(1)));
+  if (darkQuery) {
+    const onScheme = () => { if (state.settings.theme === 'auto') { applyTheme(); renderCurrent(); } };
+    darkQuery.addEventListener ? darkQuery.addEventListener('change', onScheme) : darkQuery.addListener(onScheme);
+  }
+}
+
+function init() {
+  const saved = Store.load();
+  if (saved) {
+    state = normalizeState(saved);
+  } else {
+    state = createDefaultState();
+    generateSampleData();
+    Store.saveLocal();
+  }
+  applyTheme();
+  bindEvents();
+  Cloud.init();
+  go(location.hash.slice(1) || 'dashboard');
+
+  // Registrasi Service Worker untuk PWA & Caching Offline
+  if ('serviceWorker' in navigator && (location.protocol === 'http:' || location.protocol === 'https:')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.warn('PWA ServiceWorker error:', err);
+      });
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
