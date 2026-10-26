@@ -396,8 +396,11 @@ textarea.input{resize:vertical;min-height:70px;field-sizing:content}
 .suggest{display:flex;gap:8px;align-items:flex-start;font-size:.8rem;background:var(--ok-soft);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent);border-radius:12px;padding:9px 11px;margin-top:8px;font-weight:650}
 .suggest.info{background:var(--primary-soft);color:var(--primary);border-color:color-mix(in srgb,var(--primary) 30%,transparent)}
 .sets{margin-top:10px;display:flex;flex-direction:column;gap:6px}
-.set-row{display:grid;grid-template-columns:28px minmax(0,1.15fr) minmax(0,1.25fr) 42px;gap:7px;align-items:center;padding:6px 6px;border-radius:12px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid transparent;transition:background .22s,border-color .22s}
+.set-row{display:grid;grid-template-columns:26px minmax(0,1.1fr) minmax(0,1.2fr) 40px 28px;gap:6px;align-items:center;padding:6px 6px;border-radius:12px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid transparent;transition:background .22s,border-color .22s}
 .set-row.done{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 32%,transparent)}
+.set-del-btn{width:28px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);display:grid;place-items:center;font-size:.78rem;transition:all .15s;padding:0}
+.set-del-btn:hover{background:var(--bad-soft);color:var(--bad);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+.set-del-btn:active{transform:scale(.9)}
 .set-head{font-size:.67rem;font-weight:750;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:0 6px;background:transparent;border:none}
 .set-no{width:26px;height:26px;border-radius:8px;background:var(--soft);border:1px solid var(--border);display:grid;place-items:center;font-size:.77rem;font-weight:800;font-variant-numeric:tabular-nums}
 .set-row.done .set-no{background:var(--ok);border-color:transparent;color:#fff}
@@ -516,6 +519,35 @@ textarea.input{resize:vertical;min-height:70px;field-sizing:content}
 .log-item .grow b{font-size:.92rem;font-variant-numeric:tabular-nums}
 .log-item .grow span{display:block;font-size:.74rem;color:var(--muted)}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Undo Salah Pencet & Database Optimizations */
+.undo-hdr-btn{position:relative;width:36px;height:36px;border-radius:11px;border:1px solid var(--border);background:var(--solid);display:inline-grid;place-items:center;font-size:.95rem;transition:all .18s}
+.undo-hdr-btn.has-undo{border-color:color-mix(in srgb,var(--warn) 55%,var(--border));background:var(--warn-soft);color:var(--warn);box-shadow:0 4px 12px -4px rgba(245,158,11,.35)}
+.undo-hdr-btn.has-undo:hover{transform:translateY(-1px);border-color:var(--warn)}
+.undo-hdr-btn:disabled{opacity:.36;pointer-events:none}
+.undo-badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--warn);color:#09090d;font-size:.6rem;font-weight:900;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.dash-slot-items{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;width:100%}
+.dash-item-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:8px;background:var(--soft);border:1px solid var(--border);font-size:.73rem;font-weight:650}
+.dash-item-pill button{border:none;background:transparent;color:var(--muted);font-size:.78rem;padding:0 2px;line-height:1}
+.dash-item-pill button:hover{color:var(--bad)}
+.fi-controls{display:flex;align-items:center;gap:5px;flex:none}
+.fi-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--solid);color:var(--text);display:grid;place-items:center;font-weight:800;font-size:.9rem;transition:all .15s}
+.fi-btn:hover{border-color:var(--primary);color:var(--primary)}
+.fi-btn.del:hover{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+.fav-star{border:none;background:transparent;font-size:1.05rem;padding:4px;line-height:1;opacity:.45;transition:transform .15s,opacity .15s}
+.fav-star.on,.fav-star:hover{opacity:1;transform:scale(1.12)}
+.db-toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+@media(max-width:460px){.db-toolbar{grid-template-columns:1fr}}
+.db-cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 8px}
+.db-cats::-webkit-scrollbar{display:none}
+.cat-pill{border:1px solid var(--border);background:var(--soft);padding:6px 11px;border-radius:99px;font-size:.75rem;font-weight:700;color:var(--muted);white-space:nowrap;transition:all .16s}
+.cat-pill:hover{border-color:var(--primary);color:var(--text)}
+.cat-pill.active{background:var(--primary-soft);color:var(--primary);border-color:color-mix(in srgb,var(--primary) 50%,transparent)}
+.db-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}
+@media(min-width:560px){.db-stats-grid{grid-template-columns:repeat(4,1fr)}}
+.db-stat-box{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:9px 11px;font-variant-numeric:tabular-nums}
+.db-stat-box small{display:block;font-size:.68rem;color:var(--muted);font-weight:650}
+.db-stat-box b{font-size:.95rem;font-weight:800;color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -531,6 +563,11 @@ textarea.input{resize:vertical;min-height:70px;field-sizing:content}
       <div><h1>Otot<span>Ku</span></h1><small>Crimson & Obsidian Gym Tracker</small></div>
     </div>
     <div class="header-actions">
+      <!-- Tombol Urungkan (Undo Salah Pencet) -->
+      <button class="undo-hdr-btn" id="undoHeaderBtn" data-action="undoLast" title="Belum ada aksi untuk diurungkan" aria-label="Urungkan aksi terakhir (Undo)" disabled>
+        <span>↩️</span>
+        <span class="undo-badge" id="undoHeaderCount" hidden>0</span>
+      </button>
       <!-- Badge Cepat Creatine Intake Harian -->
       <button class="cr-hdr-pill" id="creatineHeaderBadge" data-action="openCreatineModal" title="Catat Creatine Intake Harian">
         <span>⚡</span>
@@ -630,6 +667,15 @@ const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','A
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const WEEK_ORDER  = [1, 2, 3, 4, 5, 6, 0]; // Senin → Minggu
 
+const FOOD_CATEGORIES = [
+  { id: 'all',      label: 'Semua' },
+  { id: 'fav',      label: '⭐ Favorit' },
+  { id: 'protein',  label: '🍗 Sumber Protein' },
+  { id: 'karbo',    label: '🍚 Karbohidrat' },
+  { id: 'suplemen', label: '🥤 Suplemen & Susu' },
+  { id: 'camilan',  label: '🥜 Camilan & Lauk' },
+];
+
 const DEFAULT_SETTINGS = {
   weight: 55,
   goal: 'Membangun otot (hipertrofi)',
@@ -644,6 +690,7 @@ const DEFAULT_SETTINGS = {
   dumbbells: [6, 8, 9, 10, 15, 20],
   theme: 'dark',
   migratedRedBlackV1: true,
+  migratedFoodDbV2: true,
   cloud: {
     enabled: true,
     provider: 'builtin', // 'builtin' | 'supabase' | 'firebase'
@@ -659,10 +706,27 @@ const DEFAULT_SETTINGS = {
 };
 
 const DEFAULT_FOODS = [
-  { id: 'telur', name: 'Telur rebus utuh', portion: '1 butir (±50 g)',  protein: 6.3, kcal: 72,  satFat: 1.6, priceMin: 1800,  priceMax: 2000,  builtin: true },
-  { id: 'nasi',  name: 'Nasi putih',       portion: '150 g (±1 centong)', protein: 4.0, kcal: 195, satFat: 0.1, priceMin: 3000,  priceMax: 4000,  builtin: true },
-  { id: 'ayam',  name: 'Ayam goreng',      portion: '100 g (1 potong)', protein: 25,  kcal: 260, satFat: 3.5, priceMin: 10000, priceMax: 12000, builtin: true },
-  { id: 'tempe', name: 'Tempe goreng',     portion: '50 g (1 potong)',  protein: 9.5, kcal: 175, satFat: 1.8, priceMin: 1000,  priceMax: 2000,  builtin: true },
+  { id: 'telur',        name: 'Telur rebus utuh',           portion: '1 butir (±50 g)',      protein: 6.3,  kcal: 72,  satFat: 1.6, priceMin: 1800,  priceMax: 2200,  category: 'protein',  fav: true,  builtin: true },
+  { id: 'putih_telur',  name: 'Putih telur rebus',          portion: '3 butir (±100 g)',     protein: 10.8, kcal: 52,  satFat: 0.0, priceMin: 3000,  priceMax: 4500,  category: 'protein',  fav: false, builtin: true },
+  { id: 'dada_ayam',    name: 'Dada ayam fillet (rebus/bakar)', portion: '100 g matang',     protein: 31.0, kcal: 165, satFat: 1.0, priceMin: 8000,  priceMax: 10000, category: 'protein',  fav: true,  builtin: true },
+  { id: 'ayam',         name: 'Ayam goreng',                portion: '100 g (1 potong)',     protein: 25.0, kcal: 260, satFat: 3.5, priceMin: 10000, priceMax: 12000, category: 'protein',  fav: true,  builtin: true },
+  { id: 'tempe',        name: 'Tempe goreng',               portion: '50 g (1 potong)',      protein: 9.5,  kcal: 175, satFat: 1.8, priceMin: 1000,  priceMax: 2000,  category: 'protein',  fav: true,  builtin: true },
+  { id: 'tempe_kukus',  name: 'Tempe kukus / panggang',     portion: '100 g (2 potong)',     protein: 19.0, kcal: 192, satFat: 0.7, priceMin: 2500,  priceMax: 3500,  category: 'protein',  fav: false, builtin: true },
+  { id: 'tahu',         name: 'Tahu putih / bacem',         portion: '100 g (2 potong)',     protein: 8.1,  kcal: 115, satFat: 0.9, priceMin: 2000,  priceMax: 3000,  category: 'protein',  fav: false, builtin: true },
+  { id: 'ikan_tuna',    name: 'Ikan tuna / tongkol',        portion: '100 g (1 potong)',     protein: 26.0, kcal: 132, satFat: 0.6, priceMin: 7000,  priceMax: 10000, category: 'protein',  fav: false, builtin: true },
+  { id: 'ikan_lele',    name: 'Ikan lele / nila bakar',     portion: '1 ekor sedang (±100 g)', protein: 18.5, kcal: 170, satFat: 1.5, priceMin: 8000, priceMax: 11000, category: 'protein',  fav: false, builtin: true },
+  { id: 'sapi_lean',    name: 'Daging sapi tanpa lemak',    portion: '100 g matang',         protein: 26.0, kcal: 215, satFat: 4.5, priceMin: 15000, priceMax: 20000, category: 'protein',  fav: false, builtin: true },
+  { id: 'whey',         name: 'Whey Protein Shake',         portion: '1 scoop (±30 g)',      protein: 24.0, kcal: 120, satFat: 1.0, priceMin: 8000,  priceMax: 12000, category: 'suplemen', fav: true,  builtin: true },
+  { id: 'susu_hp',      name: 'Susu UHT High Protein',      portion: '250 ml (1 kotak)',     protein: 12.0, kcal: 150, satFat: 2.5, priceMin: 6500,  priceMax: 9000,  category: 'suplemen', fav: false, builtin: true },
+  { id: 'greek_yogurt', name: 'Greek Yogurt Plain',         portion: '100 g (1 cup kecil)',  protein: 10.0, kcal: 95,  satFat: 1.5, priceMin: 9000,  priceMax: 13000, category: 'suplemen', fav: false, builtin: true },
+  { id: 'nasi',         name: 'Nasi putih',                 portion: '150 g (±1 centong)',   protein: 4.0,  kcal: 195, satFat: 0.1, priceMin: 3000,  priceMax: 4000,  category: 'karbo',    fav: true,  builtin: true },
+  { id: 'nasi_merah',   name: 'Nasi merah',                 portion: '150 g (±1 centong)',   protein: 4.5,  kcal: 165, satFat: 0.2, priceMin: 4000,  priceMax: 5000,  category: 'karbo',    fav: false, builtin: true },
+  { id: 'oatmeal',      name: 'Oatmeal instan',             portion: '40 g (4 sdm)',         protein: 5.0,  kcal: 150, satFat: 0.8, priceMin: 2500,  priceMax: 3500,  category: 'karbo',    fav: false, builtin: true },
+  { id: 'kentang',      name: 'Kentang / Ubi rebus',        portion: '150 g (1 buah)',       protein: 3.0,  kcal: 130, satFat: 0.1, priceMin: 3000,  priceMax: 4500,  category: 'karbo',    fav: false, builtin: true },
+  { id: 'roti_gandum',  name: 'Roti gandum utuh',           portion: '2 lembar (±60 g)',     protein: 6.0,  kcal: 140, satFat: 0.5, priceMin: 3500,  priceMax: 5000,  category: 'karbo',    fav: false, builtin: true },
+  { id: 'edamame',      name: 'Edamame / Kedelai rebus',    portion: '100 g kupas',          protein: 11.9, kcal: 121, satFat: 0.4, priceMin: 5000,  priceMax: 7000,  category: 'camilan',  fav: false, builtin: true },
+  { id: 'kacang_tanah', name: 'Kacang tanah / Selai kacang', portion: '30 g (2 sdm)',        protein: 7.5,  kcal: 170, satFat: 2.3, priceMin: 2500,  priceMax: 4000,  category: 'camilan',  fav: false, builtin: true },
+  { id: 'pisang',       name: 'Pisang ambon / cavendish',   portion: '1 buah sedang (±100 g)', protein: 1.1, kcal: 89, satFat: 0.1, priceMin: 2000,  priceMax: 3000,  category: 'camilan',  fav: false, builtin: true },
 ];
 
 const DEFAULT_TEMPLATE = {
@@ -902,11 +966,426 @@ function seededRandom(seed) { return () => { seed = (seed * 16807) % 2147483647;
 function haptic(ms = 12) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
 
 /* =========================================================
-   3. PENYIMPANAN & STATE
+   3. PENYIMPANAN, OPTIMASI DATABASE, INDEXEDDB & UNDO
    ========================================================= */
+const DEFAULT_PROGRAM_REF = createDefaultProgram();
+
+/** Cache In-Memory untuk mempercepat query harian & grafik */
+const QueryCache = {
+  _dayTotals: new Map(),
+  _foodMap: null,
+  _exMeta: null,
+  invalidate() {
+    this._dayTotals.clear();
+    this._foodMap = null;
+    this._exMeta = null;
+  },
+  getFoodMap() {
+    if (!this._foodMap) {
+      this._foodMap = new Map();
+      (state.foods || []).forEach(f => this._foodMap.set(f.id, f));
+    }
+    return this._foodMap;
+  },
+  getExMetaMap(prog) {
+    if (!this._exMeta) {
+      this._exMeta = new Map();
+      const addFrom = p => {
+        if (!p || !p.workouts) return;
+        Object.values(p.workouts).forEach(w => {
+          (w.exercises || []).forEach(e => {
+            const meta = { target: e.target || '', media: e.media || '', video: e.video || '', cues: e.cues || '', mistakes: e.mistakes || '' };
+            if (e.id) this._exMeta.set('id:' + e.id, meta);
+            if (e.name) this._exMeta.set('nm:' + e.name.toLowerCase(), meta);
+          });
+        });
+      };
+      addFrom(DEFAULT_PROGRAM_REF);
+      addFrom(prog || state?.program);
+    }
+    return this._exMeta;
+  },
+  resolveExMeta(en, prog) {
+    const map = this.getExMetaMap(prog);
+    return (en.exId && map.get('id:' + en.exId)) || (en.name && map.get('nm:' + en.name.toLowerCase())) || {};
+  }
+};
+
+/** Engine Optimasi, Pembersihan & Kompresi Database */
+const DBOptimizer = {
+  inferFoodCategory(f) {
+    if (f.category && FOOD_CATEGORIES.some(c => c.id === f.category)) return f.category;
+    const nm = (f.name || '').toLowerCase();
+    if (/whey|susu|yogurt|creatine|shake|mass/.test(nm)) return 'suplemen';
+    if (/nasi|oat|roti|kentang|ubi|mie|pasta|singkong|jagung/.test(nm)) return 'karbo';
+    if (num(f.protein) >= 8) return 'protein';
+    return 'camilan';
+  },
+
+  hydrateSessions(st) {
+    if (!st || !st.sessions) return;
+    Object.values(st.sessions).forEach(sess => {
+      if (!sess || !Array.isArray(sess.entries)) return;
+      sess.entries.forEach(en => {
+        const meta = QueryCache.resolveExMeta(en, st.program);
+        if (!en.target && meta.target) en.target = meta.target;
+        if (!en.media && meta.media) en.media = meta.media;
+        if (!en.video && meta.video) en.video = meta.video;
+        if (!en.cues && meta.cues) en.cues = meta.cues;
+        if (!en.mistakes && meta.mistakes) en.mistakes = meta.mistakes;
+      });
+    });
+  },
+
+  cleanInPlace(st = state) {
+    let removedGhostSessions = 0, mergedMeals = 0, removedEmptyDays = 0, dedupedLogs = 0;
+    if (!st || typeof st !== 'object') return { removedGhostSessions, mergedMeals, removedEmptyDays, dedupedLogs };
+
+    // 1. Optimasi & normalisasi katalog makanan
+    if (Array.isArray(st.foods)) {
+      const seenFoodIds = new Set();
+      st.foods = st.foods.filter(f => {
+        if (!f || !f.name) return false;
+        if (!f.id) f.id = 'f_' + uid();
+        if (seenFoodIds.has(f.id)) return false;
+        seenFoodIds.add(f.id);
+        f.category = this.inferFoodCategory(f);
+        f.fav = !!f.fav;
+        f.protein = Math.max(0, round1(num(f.protein)));
+        f.kcal = Math.max(0, Math.round(num(f.kcal)));
+        f.satFat = Math.max(0, round1(num(f.satFat)));
+        f.priceMin = Math.max(0, Math.round(num(f.priceMin)));
+        f.priceMax = Math.max(0, Math.round(num(f.priceMax)));
+        return true;
+      });
+    }
+
+    // 2. Bersihkan & gabungkan entri makan duplikat pada hari dan waktu yang sama
+    if (st.meals && typeof st.meals === 'object') {
+      Object.keys(st.meals).forEach(d => {
+        const arr = st.meals[d];
+        if (!Array.isArray(arr) || !arr.length) {
+          delete st.meals[d];
+          removedEmptyDays++;
+          return;
+        }
+        const merged = [];
+        const keyMap = new Map();
+        arr.forEach(e => {
+          if (!e || !(num(e.qty) > 0)) { mergedMeals++; return; }
+          e.qty = round1(num(e.qty));
+          const key = `${e.slot || 'pagi'}__${e.foodId || e.name}__${e.sample ? '1' : '0'}`;
+          if (keyMap.has(key)) {
+            const prev = keyMap.get(key);
+            prev.qty = round1(prev.qty + e.qty);
+            mergedMeals++;
+          } else {
+            keyMap.set(key, e);
+            merged.push(e);
+          }
+        });
+        if (!merged.length) {
+          delete st.meals[d];
+          removedEmptyDays++;
+        } else {
+          st.meals[d] = merged;
+        }
+      });
+    }
+
+    // 3. Bersihkan record creatine kosong
+    if (st.creatine && typeof st.creatine === 'object') {
+      Object.keys(st.creatine).forEach(d => {
+        const c = st.creatine[d];
+        if (!c || (num(c.grams) <= 0 && num(c.water) <= 0 && !c.note)) {
+          delete st.creatine[d];
+          removedEmptyDays++;
+        }
+      });
+    }
+
+    // 4. Hapus ghost sessions (sesi tidak sengaja terbuat tanpa set selesai dan tanpa catatan)
+    if (st.sessions && typeof st.sessions === 'object') {
+      Object.keys(st.sessions).forEach(d => {
+        const s = st.sessions[d];
+        if (!s || !Array.isArray(s.entries)) {
+          delete st.sessions[d];
+          removedGhostSessions++;
+          return;
+        }
+        const hasAnyDone = s.entries.some(e => Array.isArray(e.sets) && e.sets.some(st => st.done));
+        const hasAnyNote = Boolean((s.notes && s.notes.trim()) || s.entries.some(e => e.note && e.note.trim()));
+        if (!s.completed && !hasAnyDone && !hasAnyNote) {
+          delete st.sessions[d];
+          removedGhostSessions++;
+        }
+      });
+      this.hydrateSessions(st);
+    }
+
+    // 5. Deduplikasi & urutkan catatan berat badan per tanggal
+    if (Array.isArray(st.bodyLogs)) {
+      const byDate = new Map();
+      st.bodyLogs.forEach(l => {
+        if (!l || !l.date || !(num(l.weight) >= 20)) return;
+        if (byDate.has(l.date)) dedupedLogs++;
+        byDate.set(l.date, { ...l, id: l.id || uid(), weight: round1(num(l.weight)) });
+      });
+      st.bodyLogs = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    QueryCache.invalidate();
+    return { removedGhostSessions, mergedMeals, removedEmptyDays, dedupedLogs };
+  },
+
+  /** Membuat salinan state yang sudah dikompresi (menghapus duplikasi teks panduan statis di riwayat sesi) */
+  compactForStorage(st = state) {
+    const copy = clone(st);
+    if (copy.sessions && typeof copy.sessions === 'object') {
+      Object.keys(copy.sessions).forEach(d => {
+        const s = copy.sessions[d];
+        if (!s || !Array.isArray(s.entries)) return;
+        s.entries.forEach(en => {
+          const meta = QueryCache.resolveExMeta(en, copy.program);
+          if (meta.cues && en.cues === meta.cues) delete en.cues;
+          if (meta.mistakes && en.mistakes === meta.mistakes) delete en.mistakes;
+          if (meta.media && en.media === meta.media) delete en.media;
+          if (meta.video && en.video === meta.video) delete en.video;
+          if (meta.target && en.target === meta.target) delete en.target;
+          if (!en.note) delete en.note;
+          if (!en.perSide) delete en.perSide;
+        });
+        if (!s.notes) delete s.notes;
+      });
+    }
+    return copy;
+  },
+
+  /** Penggabungan Cerdas (Smart Merge) antara data lokal dan cloud agar tidak saling menimpa */
+  mergeStates(localSt, cloudSt) {
+    const merged = normalizeState(cloudSt);
+    if (!localSt || typeof localSt !== 'object') return merged;
+    const localNewer = localSt.updatedAt && (!cloudSt.updatedAt || localSt.updatedAt >= cloudSt.updatedAt);
+
+    // Merge foods (pertahankan makanan kustom dari kedua sisi)
+    const foodMap = new Map();
+    (merged.foods || []).forEach(f => foodMap.set(f.id, f));
+    (localSt.foods || []).forEach(f => {
+      if (!foodMap.has(f.id) || localNewer) foodMap.set(f.id, f);
+    });
+    merged.foods = [...foodMap.values()];
+
+    // Merge meals per tanggal
+    Object.entries(localSt.meals || {}).forEach(([d, list]) => {
+      if (!merged.meals[d] || (localNewer && list.length)) {
+        merged.meals[d] = clone(list);
+      }
+    });
+
+    // Merge creatine per tanggal
+    Object.entries(localSt.creatine || {}).forEach(([d, cr]) => {
+      const rem = merged.creatine[d];
+      if (!rem || (num(cr.grams) > num(rem.grams)) || (num(cr.water) > num(rem.water))) {
+        merged.creatine[d] = clone(cr);
+      }
+    });
+
+    // Merge gym sessions per tanggal
+    Object.entries(localSt.sessions || {}).forEach(([d, sess]) => {
+      const rem = merged.sessions[d];
+      if (!rem) {
+        merged.sessions[d] = clone(sess);
+      } else {
+        const locDone = sess.entries?.reduce((n, e) => n + e.sets.filter(s => s.done).length, 0) || 0;
+        const remDone = rem.entries?.reduce((n, e) => n + e.sets.filter(s => s.done).length, 0) || 0;
+        if (locDone > remDone || (sess.completed && !rem.completed)) {
+          merged.sessions[d] = clone(sess);
+        }
+      }
+    });
+
+    // Merge bodyLogs per tanggal
+    const logMap = new Map();
+    (merged.bodyLogs || []).forEach(l => logMap.set(l.date, l));
+    (localSt.bodyLogs || []).forEach(l => {
+      if (!logMap.has(l.date) || localNewer) logMap.set(l.date, l);
+    });
+    merged.bodyLogs = [...logMap.values()].sort((a, b) => a.date.localeCompare(b.date));
+
+    this.cleanInPlace(merged);
+    return merged;
+  },
+
+  stats() {
+    const rawLen = JSON.stringify(state).length;
+    const compactLen = Store.size();
+    const savedPct = rawLen > compactLen ? Math.round((1 - compactLen / rawLen) * 100) : 0;
+    const mealDays = Object.keys(state.meals || {}).length;
+    const mealEntries = Object.values(state.meals || {}).reduce((acc, l) => acc + (Array.isArray(l) ? l.length : 0), 0);
+    const creatineDays = Object.keys(state.creatine || {}).length;
+    const sessionCount = Object.keys(state.sessions || {}).length;
+    const foodCount = (state.foods || []).length;
+    const logCount = (state.bodyLogs || []).length;
+    return { rawLen, compactLen, savedPct, mealDays, mealEntries, creatineDays, sessionCount, foodCount, logCount };
+  }
+};
+
+/** Dual-Storage IndexedDB Backup Engine (Anti-Hilang & Kapasitas Besar) */
+const IDBStore = {
+  dbName: 'ototku_idb_v1',
+  storeName: 'kv',
+  _dbPromise: null,
+  open() {
+    if (typeof indexedDB === 'undefined') return Promise.resolve(null);
+    if (this._dbPromise) return this._dbPromise;
+    this._dbPromise = new Promise(resolve => {
+      try {
+        const req = indexedDB.open(this.dbName, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            db.createObjectStore(this.storeName);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+    return this._dbPromise;
+  },
+  async save(key, val) {
+    const db = await this.open();
+    if (!db) return false;
+    return new Promise(resolve => {
+      try {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        tx.objectStore(this.storeName).put(val, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  },
+  async load(key) {
+    const db = await this.open();
+    if (!db) return null;
+    return new Promise(resolve => {
+      try {
+        const tx = db.transaction(this.storeName, 'readonly');
+        const req = tx.objectStore(this.storeName).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+};
+
+/** Manajer Undo ("Urungkan Salah Pencet") */
+const Undo = {
+  stack: [],
+  maxSize: 25,
+  _ignoring: false,
+  capture(label = 'Aksi terakhir') {
+    if (this._ignoring) return;
+    try {
+      const snap = {
+        id: uid(),
+        label,
+        time: `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`,
+        data: clone({
+          meals: state.meals,
+          creatine: state.creatine,
+          sessions: state.sessions,
+          bodyLogs: state.bodyLogs,
+          foods: state.foods,
+          template: state.template,
+          program: state.program,
+          sampleLoaded: state.sampleLoaded,
+          settings: {
+            weight: state.settings.weight,
+            proteinMin: state.settings.proteinMin,
+            proteinTarget: state.settings.proteinTarget,
+            proteinMax: state.settings.proteinMax,
+            creatineTarget: state.settings.creatineTarget,
+            creatineMode: state.settings.creatineMode,
+            waterTarget: state.settings.waterTarget,
+            restSeconds: state.settings.restSeconds,
+          }
+        }),
+        uiSnap: {
+          draft: ui.draft ? clone(ui.draft) : null,
+          gymOverride: clone(ui.gymOverride || {}),
+        }
+      };
+      this.stack.push(snap);
+      if (this.stack.length > this.maxSize) this.stack.shift();
+      this.updateUI();
+    } catch (e) {
+      console.warn('Undo capture warning:', e);
+    }
+  },
+  pop() {
+    if (!this.stack.length) {
+      toast('Belum ada aksi baru untuk diurungkan', 'warn');
+      return false;
+    }
+    const snap = this.stack.pop();
+    this._ignoring = true;
+    try {
+      haptic(14);
+      state.meals = snap.data.meals;
+      state.creatine = snap.data.creatine;
+      state.sessions = snap.data.sessions;
+      state.bodyLogs = snap.data.bodyLogs;
+      state.foods = snap.data.foods;
+      state.template = snap.data.template;
+      state.program = snap.data.program;
+      state.sampleLoaded = snap.data.sampleLoaded;
+      Object.assign(state.settings, snap.data.settings);
+      if (snap.uiSnap) {
+        ui.draft = snap.uiSnap.draft;
+        ui.gymOverride = snap.uiSnap.gymOverride || {};
+      }
+      DBOptimizer.hydrateSessions(state);
+      QueryCache.invalidate();
+      if (typeof Timer !== 'undefined' && Timer.stop) Timer.stop();
+      save();
+      renderCurrent();
+      const searchEl = $('#foodSearch');
+      if (searchEl && $('#foodPickList')) $('#foodPickList').innerHTML = foodPickHtml(searchEl.value);
+      toast(`↩️ Diurungkan: ${esc(snap.label)}`, 'ok');
+    } finally {
+      this._ignoring = false;
+      this.updateUI();
+    }
+    return true;
+  },
+  updateUI() {
+    const btn = $('#undoHeaderBtn');
+    const badge = $('#undoHeaderCount');
+    if (!btn) return;
+    const n = this.stack.length;
+    btn.disabled = n === 0;
+    btn.classList.toggle('has-undo', n > 0);
+    if (n > 0) {
+      const last = this.stack[n - 1];
+      btn.title = `Urungkan salah pencet: ${last.label} (${last.time}) · Ctrl+Z`;
+      if (badge) { badge.textContent = n; badge.hidden = false; }
+    } else {
+      btn.title = 'Belum ada aksi untuk diurungkan';
+      if (badge) badge.hidden = true;
+    }
+  }
+};
+
 function createDefaultState() {
   return {
-    version: 1,
+    version: 2,
     updatedAt: null,
     _dirty: false,
     settings: clone(DEFAULT_SETTINGS),
@@ -944,13 +1423,33 @@ function normalizeState(raw) {
   }
   if (!(mergedSettings.creatineTarget > 0)) mergedSettings.creatineTarget = 5;
   if (!(mergedSettings.waterTarget > 0)) mergedSettings.waterTarget = 10;
-  return {
+
+  let foods = Array.isArray(raw.foods) ? clone(raw.foods) : base.foods;
+  // Migrasi katalog makanan versi 2: tambahkan menu bawaan baru tanpa menimpa edit user
+  if (!raw.settings?.migratedFoodDbV2) {
+    const existingIds = new Set(foods.map(f => f.id));
+    DEFAULT_FOODS.forEach(df => {
+      if (!existingIds.has(df.id)) {
+        foods.push(clone(df));
+      } else {
+        const cur = foods.find(x => x.id === df.id);
+        if (cur && !cur.category) {
+          cur.category = df.category;
+          if (cur.fav === undefined) cur.fav = df.fav;
+        }
+      }
+    });
+    mergedSettings.migratedFoodDbV2 = true;
+  }
+
+  const normalized = {
     ...base,
+    version: 2,
     updatedAt: raw.updatedAt || null,
     _dirty: !!raw._dirty,
     sampleLoaded: !!raw.sampleLoaded,
     settings: mergedSettings,
-    foods: Array.isArray(raw.foods) ? raw.foods : base.foods,
+    foods,
     template: obj(raw.template) ? { ...base.template, ...raw.template } : base.template,
     program: obj(raw.program) && obj(raw.program.workouts)
       ? { schedule: { ...base.program.schedule, ...(raw.program.schedule || {}) }, workouts: raw.program.workouts }
@@ -960,9 +1459,11 @@ function normalizeState(raw) {
     sessions: obj(raw.sessions) ? raw.sessions : {},
     bodyLogs: Array.isArray(raw.bodyLogs) ? raw.bodyLogs : [],
   };
+  DBOptimizer.cleanInPlace(normalized);
+  return normalized;
 }
 
-/** LocalStorage & Cloud Auto-Sync */
+/** LocalStorage + IndexedDB Dual Persistence & Cloud Auto-Sync */
 const Store = {
   load() {
     try {
@@ -976,7 +1477,10 @@ const Store = {
   },
   saveLocal() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const compact = DBOptimizer.compactForStorage(state);
+      const serialized = JSON.stringify(compact);
+      localStorage.setItem(STORAGE_KEY, serialized);
+      IDBStore.save(STORAGE_KEY, compact);
       return true;
     } catch (err) {
       console.error('Gagal menyimpan localStorage:', err);
@@ -990,9 +1494,11 @@ const Store = {
 };
 
 function save() {
+  QueryCache.invalidate();
   state.updatedAt = new Date().toISOString();
   state._dirty = true;
   const ok = Store.saveLocal();
+  Undo.updateUI();
   if (state.settings?.cloud?.enabled && state.settings?.cloud?.autoSync) {
     clearTimeout(Cloud._debounceTimer);
     Cloud._debounceTimer = setTimeout(() => {
@@ -1017,6 +1523,10 @@ const ui = {
   addSlot: 'pagi',
   foodFormFromAdd: false,
   modalOnClose: null,
+  dbSearch: '',
+  dbCat: 'all',
+  dbSort: 'fav',
+  showAllLogs: false,
 };
 
 /* =========================================================
@@ -1030,6 +1540,8 @@ const Cloud = {
   _sse: null,
   _sseTopic: null,
   _isPulling: false,
+  _isPushing: false,
+  _pendingPush: false,
   deviceId: 'dev_' + Math.random().toString(36).slice(2, 10),
 
   cleanTopic(syncKey) {
@@ -1175,28 +1687,35 @@ const Cloud = {
       if (manual) toast('Cloud belum diaktifkan atau belum lengkap', 'warn');
       return;
     }
+    if (this._isPushing) {
+      this._pendingPush = true;
+      return;
+    }
+    this._isPushing = true;
     const syncKey = (c.syncKey || DEFAULT_SYNC_KEY).trim();
     this.status = 'syncing';
     this.statusMsg = 'Menyimpan...';
     this.updateBadge();
 
     try {
+      DBOptimizer.cleanInPlace(state);
+      const compactState = DBOptimizer.compactForStorage(state);
       const nowIso = state.updatedAt || new Date().toISOString();
       state.updatedAt = nowIso;
-      const cleanSettings = clone(state.settings);
+      const cleanSettings = clone(compactState.settings);
       const payload = {
         app: 'OtotKu',
         updatedAt: nowIso,
-        version: state.version || 1,
-        sampleLoaded: !!state.sampleLoaded,
+        version: compactState.version || 2,
+        sampleLoaded: !!compactState.sampleLoaded,
         settings: cleanSettings,
-        foods: state.foods,
-        template: state.template,
-        program: state.program,
-        meals: state.meals,
-        creatine: state.creatine,
-        sessions: state.sessions,
-        bodyLogs: state.bodyLogs,
+        foods: compactState.foods,
+        template: compactState.template,
+        program: compactState.program,
+        meals: compactState.meals,
+        creatine: compactState.creatine,
+        sessions: compactState.sessions,
+        bodyLogs: compactState.bodyLogs,
       };
 
       if (c.provider === 'builtin') {
@@ -1254,19 +1773,19 @@ const Cloud = {
           console.warn('Primary cloud REST warning:', errRest);
         }
 
-        // 2. Kirim broadcast realtime + backup ringkas ke ntfy channel
+        // 2. Kirim broadcast realtime + backup ringkas terkompresi ke ntfy channel
         try {
           const compactBackup = {
             app: 'OtotKu',
             updatedAt: nowIso,
-            sampleLoaded: !!state.sampleLoaded,
+            sampleLoaded: !!compactState.sampleLoaded,
             settings: cleanSettings,
-            foods: state.foods,
-            template: state.template,
-            meals: state.meals,
-            creatine: state.creatine,
-            sessions: state.sessions,
-            bodyLogs: state.bodyLogs,
+            foods: compactState.foods,
+            template: compactState.template,
+            meals: compactState.meals,
+            creatine: compactState.creatine,
+            sessions: compactState.sessions,
+            bodyLogs: compactState.bodyLogs,
           };
           let ntfyMsg = JSON.stringify({
             type: 'ototku_sync',
@@ -1317,6 +1836,12 @@ const Cloud = {
       this.statusMsg = 'Gagal Sync';
       this.updateBadge();
       if (manual) toast('Gagal simpan ke Cloud: ' + (err.message || err), 'bad');
+    } finally {
+      this._isPushing = false;
+      if (this._pendingPush) {
+        this._pendingPush = false;
+        setTimeout(() => this.push(), 400);
+      }
     }
   },
 
@@ -1414,18 +1939,19 @@ const Cloud = {
 
       if (cloudData && cloudData.settings) {
         const localHasNewer = state._dirty && state.updatedAt && cloudData.updatedAt && state.updatedAt > cloudData.updatedAt;
-        if (localHasNewer && !manual) {
-          this._isPulling = false;
-          await this.push({ manual: false });
-          return;
-        }
         const currentCloudConf = clone(state.settings.cloud);
-        state = normalizeState(cloudData);
+        state = state._dirty ? DBOptimizer.mergeStates(state, cloudData) : normalizeState(cloudData);
         state.settings.cloud = {
           ...currentCloudConf,
           objectId: currentCloudConf.objectId || BUILTIN_CLOUD_OBJECT_ID,
           lastSyncedAt: new Date().toISOString()
         };
+        if (localHasNewer && !manual) {
+          this._isPulling = false;
+          await this.push({ manual: false });
+          renderCurrent();
+          return;
+        }
         state.updatedAt = cloudData.updatedAt || new Date().toISOString();
         state._dirty = false;
         Store.saveLocal();
@@ -1540,10 +2066,11 @@ function removeSampleData() {
 /* =========================================================
    6. PERHITUNGAN NUTRISI, PROGRESSIVE OVERLOAD & SESI
    ========================================================= */
-const findFood = id => state.foods.find(f => f.id === id);
+const findFood = id => QueryCache.getFoodMap().get(id) || state.foods.find(f => f.id === id);
 const foodPrice = f => (f.priceMax && num(f.priceMax) > 0) ? (num(f.priceMin) + num(f.priceMax)) / 2 : num(f.priceMin);
 const foodPriceText = f => (f.priceMax && num(f.priceMax) !== num(f.priceMin) && num(f.priceMax) > 0)
   ? `${fmtRp(f.priceMin)}–${Math.round(num(f.priceMax)).toLocaleString('id-ID')}` : fmtRp(f.priceMin);
+const favFirstFoods = () => [...state.foods].sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0));
 
 function makeMealEntry(food, slot, qty = 1, sample = false) {
   const e = { id: uid(), foodId: food.id, name: food.name, portion: food.portion,
@@ -1559,7 +2086,12 @@ function sumEntries(list) {
     return t;
   }, { protein: 0, kcal: 0, satFat: 0, cost: 0 });
 }
-const dayTotals = date => sumEntries(state.meals[date] || []);
+function dayTotals(date) {
+  if (QueryCache._dayTotals.has(date)) return QueryCache._dayTotals.get(date);
+  const tot = sumEntries(state.meals[date] || []);
+  QueryCache._dayTotals.set(date, tot);
+  return tot;
+}
 const hasMeals = date => (state.meals[date] || []).length > 0;
 
 function rangeTotals(start, end) {
@@ -1783,7 +2315,7 @@ function creatineCardHtml(date, { scope = 'dash', showProtocol = false } = {}) {
         <input type="number" min="0" max="30" step="0.5" inputmode="decimal" value="${c.grams}" data-change="creatineSet" data-date="${date}" aria-label="Gram creatine">
         <button type="button" data-action="creatineStep" data-date="${date}" data-d="1" aria-label="Tambah creatine">+</button>
       </div>
-      ${c.grams > 0 ? `<button type="button" class="btn-icon ghost" data-action="creatineReset" data-date="${date}" title="Reset creatine hari ini" aria-label="Reset">↺</button>` : ''}
+      ${c.grams > 0 ? `<button type="button" class="btn btn-sm btn-danger-soft" data-action="creatineReset" data-date="${date}" title="Hapus/Reset creatine hari ini" aria-label="Reset Creatine">🗑️ Reset</button>` : ''}
     </div>
 
     <div class="creatine-timings" aria-label="Waktu konsumsi creatine">
@@ -1813,6 +2345,7 @@ function creatineCardHtml(date, { scope = 'dash', showProtocol = false } = {}) {
         <button type="button" class="btn btn-sm" data-action="waterStep" data-date="${date}" data-d="-1" aria-label="Kurangi gelas air">−</button>
         <button type="button" class="btn btn-sm btn-soft" data-action="waterStep" data-date="${date}" data-d="1">💧 +1 Gelas</button>
         <button type="button" class="btn btn-sm" data-action="waterStep" data-date="${date}" data-d="2">+500ml</button>
+        ${c.water > 0 ? `<button type="button" class="btn-icon ghost" style="width:32px;height:32px" data-action="waterReset" data-date="${date}" title="Reset air minum hari ini" aria-label="Reset air">🗑️</button>` : ''}
       </div>
     </div>
 
@@ -1836,10 +2369,12 @@ function gymCreatineBarHtml(date) {
         ${done ? `✓ Dosis creatine hari ini terpenuhi${c.takenAt ? ` (pukul ${c.takenAt})` : ''} · 💧 Air ${c.water}/${waterTarget} gelas` : `Belum mencapai target ${target} g hari ini · 💧 Air ${c.water}/${waterTarget} gelas`}
       </div>
     </div>
-    <div class="row" style="gap:6px">
+    <div class="row wrap" style="gap:5px">
       <button type="button" class="btn btn-sm ${done ? 'btn-soft' : 'btn-primary'}" data-action="creatineQuick" data-date="${date}" data-grams="${scoopG}">
         ${done ? '✓ Tercatat' : `⚡ +${scoopG}g Creatine`}
       </button>
+      ${c.grams > 0 ? `<button type="button" class="btn btn-sm btn-danger-soft" data-action="creatineReset" data-date="${date}" title="Hapus creatine hari ini">🗑️</button>` : ''}
+      ${c.water > 0 ? `<button type="button" class="btn btn-sm" data-action="waterStep" data-date="${date}" data-d="-1" title="Kurangi 1 gelas air">−💧</button>` : ''}
       <button type="button" class="btn btn-sm btn-soft" data-action="waterStep" data-date="${date}" data-d="1">💧 +1 Gelas</button>
     </div>
   </div>`;
@@ -2280,17 +2815,28 @@ function renderDashboard() {
   const slotRows = MEAL_SLOTS.map(sl => {
     const items = todayMeals.filter(e => e.slot === sl.id);
     const p = sumEntries(items).protein;
-    return `<li>
-      <span>${sl.icon} <b>${sl.label}</b> <span class="muted small">${sl.time}</span></span>
-      <span class="row" style="gap:6px">
-        ${items.length ? `<span class="chip chip-ok">✓ ${fmtNum(p, 1)} g</span>` : '<span class="chip chip-muted">Belum</span>'}
-        <button type="button" class="btn btn-sm btn-soft" style="padding:4px 8px;font-size:.73rem" data-action="dashAddSlot" data-slot="${sl.id}" aria-label="Tambah makan ${sl.label}">+ Catat</button>
-      </span>
+    const pillsHtml = items.length ? `<div class="dash-slot-items">${items.map(it => `
+      <span class="dash-item-pill">
+        <span>${fmtNum(it.qty, 1)}× ${esc(it.name)}</span>
+        <button type="button" data-action="delEntry" data-date="${today}" data-id="${it.id}" title="Hapus ${esc(it.name)} (salah pencet)" aria-label="Hapus ${esc(it.name)}">✕</button>
+      </span>`).join('')}</div>` : '';
+    return `<li style="flex-direction:column;align-items:stretch;gap:4px">
+      <div class="row between">
+        <span>${sl.icon} <b>${sl.label}</b> <span class="muted small">${sl.time}</span></span>
+        <span class="row" style="gap:6px">
+          ${items.length ? `<span class="chip chip-ok">✓ ${fmtNum(p, 1)} g</span>` : '<span class="chip chip-muted">Belum</span>'}
+          ${items.length ? `<button type="button" class="btn btn-sm btn-danger-soft" style="padding:4px 7px;font-size:.72rem" data-action="clearMealSlot" data-date="${today}" data-slot="${sl.id}" title="Kosongkan ${sl.label}">🗑️</button>` : ''}
+          <button type="button" class="btn btn-sm btn-soft" style="padding:4px 8px;font-size:.73rem" data-action="dashAddSlot" data-slot="${sl.id}" aria-label="Tambah makan ${sl.label}">+ Catat</button>
+        </span>
+      </div>
+      ${pillsHtml}
     </li>`;
   }).join('');
   const mealHtml = `
     <div class="card-head"><div><h3 class="card-title">🍽️ Jadwal makan</h3>
-      <p class="muted small">${next ? `${next.isNow ? 'Sekarang waktunya' : 'Berikutnya'}: <b>${next.label} (${next.time})</b>` : 'Semua waktu makan hari ini sudah lewat'}</p></div></div>
+      <p class="muted small">${next ? `${next.isNow ? 'Sekarang waktunya' : 'Berikutnya'}: <b>${next.label} (${next.time})</b>` : 'Semua waktu makan hari ini sudah lewat'}</p></div>
+      ${todayMeals.length ? `<button type="button" class="btn btn-sm btn-danger-soft" data-action="clearMealDay" data-date="${today}" title="Kosongkan semua catatan makan hari ini">🗑️ Kosongkan</button>` : ''}
+    </div>
     <ul class="list">${slotRows}</ul>
     <div class="btn-row mt">
       ${!todayMeals.length ? '<button class="btn btn-primary grow" data-action="applyTemplateToday" id="dashApplyTemplate">⚡ Menu Harian Saya</button>' : ''}
@@ -2333,6 +2879,7 @@ function renderDashboard() {
         <button type="button" data-action="creatineQuick" data-date="${today}" data-grams="${cTarget}">${cr.grams >= cTarget ? `✓ Creatine ${fmtNum(cr.grams, 1)}g` : `⚡ +${cTarget}g Creatine`}</button>
         <button type="button" data-action="waterStep" data-date="${today}" data-d="1">💧 +1 Gelas Air</button>
         <button type="button" data-action="startWorkout">🏋️ ${w ? (sess && sess.completed ? 'Sesi Selesai' : 'Latihan Gym') : 'Tracker Gym'}</button>
+        ${Undo.stack.length ? `<button type="button" data-action="undoLast" title="Batalkan aksi terakhir (${esc(Undo.stack[Undo.stack.length - 1].label)})">↩️ Batal Salah Pencet (${Undo.stack.length})</button>` : ''}
       </div>
     </div>
 
@@ -2443,14 +2990,14 @@ function creatineTrackerPageHtml() {
 
 function mealLogHtml() {
   const date = ui.mealDate, list = state.meals[date] || [], s = state.settings;
-  const quickFoods = state.foods.slice(0, 6);
+  const quickFoods = favFirstFoods().slice(0, 8);
 
   const slots = MEAL_SLOTS.map(sl => {
     const items = list.filter(e => e.slot === sl.id);
     const tot = sumEntries(items);
     const quickBar = quickFoods.length ? `<div class="slot-quick" aria-label="Tambah cepat ke ${sl.label}">
       <span class="slot-quick-lbl">⚡ Cepat:</span>
-      ${quickFoods.map(f => `<button type="button" class="sq-pill" data-action="quickAddFood" data-date="${date}" data-slot="${sl.id}" data-id="${f.id}" data-qty="1">+ ${esc(f.name)} <span class="muted">(${fmtNum(f.protein, 1)}g)</span></button>`).join('')}
+      ${quickFoods.map(f => `<button type="button" class="sq-pill" data-action="quickAddFood" data-date="${date}" data-slot="${sl.id}" data-id="${f.id}" data-qty="1">${f.fav ? '⭐ ' : '+ '}${esc(f.name)} <span class="muted">(${fmtNum(f.protein, 1)}g)</span></button>`).join('')}
     </div>` : '';
 
     return `<div class="card">
@@ -2458,7 +3005,10 @@ function mealLogHtml() {
         <div class="slot-icon">${sl.icon}</div>
         <div class="grow"><h3>${sl.label} <span class="muted small" style="font-weight:500">${sl.time}</span></h3>
           <div class="slot-tot">${fmtNum(tot.protein, 1)} g protein · ${fmtNum(tot.kcal)} kkal · ${fmtRp(tot.cost)}</div></div>
-        <button class="btn btn-sm btn-primary" data-action="openAddFood" data-slot="${sl.id}" id="add-${sl.id}">+ Pilih Menu</button>
+        <div class="row" style="gap:6px">
+          ${items.length ? `<button class="btn btn-sm btn-danger-soft" type="button" data-action="clearMealSlot" data-date="${date}" data-slot="${sl.id}" title="Kosongkan waktu makan ${sl.label}">🗑️ Kosongkan</button>` : ''}
+          <button class="btn btn-sm btn-primary" data-action="openAddFood" data-slot="${sl.id}" id="add-${sl.id}">+ Pilih Menu</button>
+        </div>
       </div>
       ${quickBar}
       ${items.length ? `<ul class="entry-list">${items.map(e => `
@@ -2472,7 +3022,7 @@ function mealLogHtml() {
             <input type="number" min="0" step="0.5" inputmode="decimal" value="${e.qty}" data-change="qtySet" data-id="${e.id}" aria-label="Jumlah porsi">
             <button type="button" data-action="qtyStep" data-id="${e.id}" data-d="1" aria-label="Tambah">+</button>
           </div>
-          <button class="btn-icon ghost" data-action="delEntry" data-id="${e.id}" aria-label="Hapus">🗑️</button>
+          <button class="btn-icon ghost" data-action="delEntry" data-date="${date}" data-id="${e.id}" title="Hapus item ini" aria-label="Hapus">🗑️</button>
         </li>`).join('')}</ul>` : '<p class="empty-sm mt">Belum ada catatan untuk waktu ini. Ketuk tombol cepat di atas atau "+ Pilih Menu".</p>'}
     </div>`;
   }).join('');
@@ -2496,6 +3046,7 @@ function mealLogHtml() {
       <button class="btn btn-primary" data-action="applyTemplate" id="applyTemplateBtn">⚡ Terapkan "Menu Harian Saya"</button>
       <button class="btn" data-action="copyYesterday" id="copyYesterdayBtn">📋 Salin kemarin</button>
       <button class="btn" data-action="saveTemplate" id="saveTemplateBtn">💾 Jadikan template</button>
+      ${list.length ? `<button class="btn btn-danger-soft" data-action="clearMealDay" data-date="${date}" id="clearMealDayBtn">🗑️ Kosongkan Hari Ini</button>` : ''}
     </div>
     ${proteinGapBannerHtml(date)}
     ${creatineCardHtml(date, { scope: 'meal' })}
@@ -2513,24 +3064,125 @@ function mealLogHtml() {
     </div>`;
 }
 
+function foodDbListHtml() {
+  const q = (ui.dbSearch || '').toLowerCase().trim();
+  const cat = ui.dbCat || 'all';
+  const sort = ui.dbSort || 'fav';
+
+  const filtered = state.foods.filter(f => {
+    if (cat !== 'all' && (f.category || 'protein') !== cat) return false;
+    if (q && !f.name.toLowerCase().includes(q) && !(f.portion || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const effOf = f => {
+    const p = foodAvgPrice(f);
+    return p > 0 ? (num(f.protein) / (p / 1000)) : 0;
+  };
+
+  filtered.sort((a, b) => {
+    if (sort === 'protein') return num(b.protein) - num(a.protein);
+    if (sort === 'efficiency') return effOf(b) - effOf(a);
+    if (sort === 'kcal_asc') return num(a.kcal) - num(b.kcal);
+    if (sort === 'price_asc') return foodAvgPrice(a) - foodAvgPrice(b);
+    if (sort === 'name') return a.name.localeCompare(b.name, 'id');
+    // default 'fav'
+    if (!!b.fav !== !!a.fav) return b.fav ? 1 : -1;
+    return num(b.protein) - num(a.protein);
+  });
+
+  if (!filtered.length) {
+    return `<p class="empty-sm">Tidak ada makanan yang cocok dengan pencarian/filter. Klik "+ Makanan baru" atau "↺ Pulihkan Bawaan".</p>`;
+  }
+
+  return filtered.map(f => {
+    const eff = effOf(f);
+    const catInfo = FOOD_CATEGORIES[f.category || 'protein'] || FOOD_CATEGORIES.protein;
+    return `
+      <div class="food-item" style="cursor:default">
+        <button type="button" class="fav-star ${f.fav ? 'on' : ''}" data-action="toggleFoodFav" data-id="${f.id}" title="${f.fav ? 'Hapus dari favorit' : 'Jadikan favorit'}" aria-label="Favorit ${esc(f.name)}">${f.fav ? '⭐' : '☆'}</button>
+        <div class="fi-main">
+          <b>${esc(f.name)} <span class="chip chip-muted" style="font-size:.66rem">${catInfo.label}</span> ${f.builtin ? '<span class="chip chip-primary" style="font-size:.65rem">Bawaan</span>' : ''}</b>
+          <span>${esc(f.portion)}</span>
+          <div class="nutri">
+            <span class="chip chip-ok">${fmtNum(f.protein, 1)} g P</span>
+            <span class="chip chip-muted">${fmtNum(f.kcal)} kkal</span>
+            <span class="chip chip-warn">${fmtNum(f.satFat, 1)} g LJ</span>
+            <span class="chip chip-muted">${foodPriceText(f)}</span>
+            ${eff > 0 ? `<span class="chip chip-primary" title="Efisiensi protein per Rp 1.000">⚡ ${fmtNum(eff, 1)}g/Rp1rb</span>` : ''}
+          </div>
+        </div>
+        <div class="ex-actions">
+          <button class="btn-icon" data-action="openFoodForm" data-id="${f.id}" title="Edit ${esc(f.name)}" aria-label="Edit ${esc(f.name)}">✏️</button>
+          <button class="btn-icon" data-action="delFood" data-id="${f.id}" title="Hapus ${esc(f.name)}" aria-label="Hapus ${esc(f.name)}">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function dbOptimizerCardHtml() {
+  const st = DBOptimizer.stats();
+  return `
+    <div class="card" style="border:1.5px solid color-mix(in srgb,var(--ok) 40%,var(--border))">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">⚡ Optimasi & Kesehatan Database</h3>
+          <p class="muted small">Mesin penyimpanan ganda (LocalStorage + IndexedDB) dengan kompresi metadata sesi & indeks O(1) aktif.</p>
+        </div>
+        <span class="chip chip-ok">✓ Hemat ${st.savedPct}%</span>
+      </div>
+      <div class="db-stats-grid">
+        <div class="db-stat-box"><b>${fmtNum(st.compactBytes / 1024, 1)} KB</b><span>Ukuran Terkompresi (vs ${fmtNum(st.rawBytes / 1024, 1)} KB)</span></div>
+        <div class="db-stat-box"><b>${st.foodsCount} menu</b><span>Katalog Makanan</span></div>
+        <div class="db-stat-box"><b>${st.mealDays} hari (${st.mealEntries} item)</b><span>Riwayat Makan</span></div>
+        <div class="db-stat-box"><b>${st.completedSess}/${st.sessCount} sesi</b><span>Sesi Gym Tersimpan</span></div>
+        <div class="db-stat-box"><b>${st.logsCount} catatan</b><span>Log Berat Badan</span></div>
+        <div class="db-stat-box"><b>LS + IndexedDB</b><span>Cadangan Ganda Otomatis</span></div>
+      </div>
+      <div class="btn-row wrap mt">
+        <button type="button" class="btn btn-primary btn-sm" data-action="optimizeDbNow">⚡ Optimalkan & Bersihkan Database</button>
+        <button type="button" class="btn btn-soft btn-sm" data-action="smartMergeCloud">🔀 Smart Merge Cloud</button>
+        <button type="button" class="btn btn-sm" data-action="restoreBuiltinFoods">↺ Pulihkan Makanan Bawaan</button>
+      </div>
+    </div>`;
+}
+
 function foodDbHtml() {
+  const cat = ui.dbCat || 'all';
+  const sort = ui.dbSort || 'fav';
   return `
     <div class="card">
-      <div class="card-head"><div><h3 class="card-title">🗂️ Database makanan</h3><p class="muted small">Nilai per porsi. Edit sesuai warung/merek favorit Anda.</p></div>
-        <button class="btn btn-sm btn-primary" data-action="openFoodForm" id="newFoodBtn">+ Makanan baru</button></div>
-      <div class="food-pick">
-        ${state.foods.map(f => `
-          <div class="food-item" style="cursor:default">
-            <div class="fi-main"><b>${esc(f.name)} ${f.builtin ? '<span class="chip chip-primary">Bawaan</span>' : ''}</b><span>${esc(f.portion)}</span>
-              <div class="nutri"><span class="chip chip-ok">${fmtNum(f.protein, 1)} g protein</span><span class="chip chip-muted">${fmtNum(f.kcal)} kkal</span>
-              <span class="chip chip-warn">${fmtNum(f.satFat, 1)} g LJ</span><span class="chip chip-muted">${foodPriceText(f)}</span></div></div>
-            <div class="ex-actions">
-              <button class="btn-icon" data-action="openFoodForm" data-id="${f.id}" aria-label="Edit ${esc(f.name)}">✏️</button>
-              ${f.builtin ? '' : `<button class="btn-icon" data-action="delFood" data-id="${f.id}" aria-label="Hapus ${esc(f.name)}">🗑️</button>`}
-            </div>
-          </div>`).join('')}
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">🗂️ Database Makanan (${state.foods.length} menu)</h3>
+          <p class="muted small">Klik ⭐ untuk favorit, atau hapus/edit makanan kapan saja. Tersedia fitur urut efisiensi protein per Rupiah.</p>
+        </div>
+        <div class="row" style="gap:6px">
+          <button class="btn btn-sm" type="button" data-action="restoreBuiltinFoods" title="Kembalikan makanan bawaan yang terhapus">↺ Pulihkan Bawaan</button>
+          <button class="btn btn-sm btn-primary" data-action="openFoodForm" id="newFoodBtn">+ Makanan baru</button>
+        </div>
+      </div>
+      <div class="db-toolbar">
+        <input class="input input-sm" type="search" placeholder="🔍 Cari nama makanan atau porsi…" value="${esc(ui.dbSearch || '')}" data-input="dbFoodSearch" id="dbFoodSearchInput" autocomplete="off">
+        <select class="input input-sm" data-change="dbFoodSort" aria-label="Urutkan makanan">
+          <option value="fav" ${sort === 'fav' ? 'selected' : ''}>⭐ Favorit & Protein</option>
+          <option value="protein" ${sort === 'protein' ? 'selected' : ''}>💪 Protein Tertinggi</option>
+          <option value="efficiency" ${sort === 'efficiency' ? 'selected' : ''}>⚡ Protein / Rp Terbaik</option>
+          <option value="kcal_asc" ${sort === 'kcal_asc' ? 'selected' : ''}>🔥 Kalori Terendah</option>
+          <option value="price_asc" ${sort === 'price_asc' ? 'selected' : ''}>💰 Harga Termurah</option>
+          <option value="name" ${sort === 'name' ? 'selected' : ''}>🔤 Nama (A–Z)</option>
+        </select>
+      </div>
+      <div class="db-cats">
+        ${Object.entries(FOOD_CATEGORIES).map(([k, v]) => `
+          <button type="button" class="cat-pill ${cat === k ? 'active' : ''}" data-action="dbFoodCat" data-cat="${k}">${v.label}</button>
+        `).join('')}
+      </div>
+      <div class="food-pick" id="dbFoodList">
+        ${foodDbListHtml()}
       </div>
     </div>
+    ${dbOptimizerCardHtml()}
     <div class="card">
       <h3 class="card-title">⚡ Template "Menu Harian Saya"</h3>
       ${MEAL_SLOTS.map(sl => `<p class="small" style="margin-bottom:6px"><b>${sl.icon} ${sl.label}:</b> ${(state.template[sl.id] || []).map(t => {
@@ -2540,19 +3192,26 @@ function foodDbHtml() {
 }
 
 function foodPickHtml(q = '') {
-  const items = state.foods.filter(f => f.name.toLowerCase().includes(q.toLowerCase().trim()));
+  const query = q.toLowerCase().trim();
+  const items = favFirstFoods().filter(f => !query || f.name.toLowerCase().includes(query) || (f.category || '').toLowerCase().includes(query));
   if (!items.length) return '<p class="empty-sm">Tidak ditemukan. Buat makanan baru di bawah.</p>';
   const dayList = state.meals[ui.mealDate] || [];
   return items.map(f => {
     const inSlot = dayList.filter(e => e.foodId === f.id && e.slot === ui.addSlot).reduce((s, e) => s + e.qty, 0);
     return `
-    <button type="button" class="food-item" data-action="addFood" data-id="${f.id}">
-      <div class="fi-main">
-        <b>${esc(f.name)} ${inSlot > 0 ? `<span class="chip chip-ok">✓ ${fmtNum(inSlot, 1)}×</span>` : ''}</b>
+    <div class="food-item">
+      <div class="fi-main" data-action="addFood" data-id="${f.id}" style="cursor:pointer">
+        <b>${f.fav ? '⭐ ' : ''}${esc(f.name)} ${inSlot > 0 ? `<span class="chip chip-ok">✓ ${fmtNum(inSlot, 1)}× di waktu ini</span>` : ''}</b>
         <span>${esc(f.portion)} · <strong style="color:var(--primary)">${fmtNum(f.protein, 1)} g P</strong> · ${fmtNum(f.kcal)} kkal · ${foodPriceText(f)}</span>
       </div>
-      <span class="fi-add">+</span>
-    </button>`;
+      <div class="fi-controls">
+        ${inSlot > 0 ? `
+          <button type="button" class="fi-btn minus" data-action="subFoodModal" data-id="${f.id}" title="Kurangi 1 porsi (batal salah pencet)" aria-label="Kurangi 1 porsi ${esc(f.name)}">−</button>
+          <button type="button" class="fi-btn trash" data-action="delFoodModal" data-id="${f.id}" title="Hapus dari waktu makan ini" aria-label="Hapus ${esc(f.name)} dari slot">🗑️</button>
+        ` : ''}
+        <button type="button" class="fi-btn plus" data-action="addFood" data-id="${f.id}" title="Tambah 1 porsi" aria-label="Tambah 1 porsi ${esc(f.name)}">+</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -2561,9 +3220,9 @@ function openAddFood(slot) {
   const sl = MEAL_SLOTS.find(x => x.id === slot);
   openModal({
     title: `${sl.icon} Tambah ke ${sl.label}`,
-    body: `<input class="input" type="search" placeholder="Cari makanan…" data-input="foodSearch" id="foodSearch" autocomplete="off">
+    body: `<input class="input" type="search" placeholder="🔍 Cari makanan (ketuk + untuk tambah, − / 🗑️ jika salah pencet)…" data-input="foodSearch" id="foodSearch" autocomplete="off">
       <div class="food-pick" id="foodPickList">${foodPickHtml()}</div>
-      <p class="small muted mb">Ketuk makanan untuk langsung menambah +1 porsi ke waktu ${sl.label}.</p>
+      <p class="small muted mb">💡 Salah pencet? Tekan tombol <b>−</b> atau <b>🗑️</b> yang muncul di samping makanan untuk langsung menghapusnya.</p>
       <button type="button" class="btn btn-block btn-soft" data-action="openFoodForm" data-from-add="1" id="addNewFoodBtn">+ Buat makanan baru</button>`,
     foot: '<button class="btn btn-primary" data-action="closeModal" type="button" id="addFoodDone">Selesai</button>',
   });
@@ -2571,20 +3230,36 @@ function openAddFood(slot) {
 
 function openFoodForm(id, fromAdd = false) {
   ui.foodFormFromAdd = fromAdd;
-  const f = id ? findFood(id) : { name: '', portion: '1 porsi', protein: '', kcal: '', satFat: '', priceMin: '', priceMax: '' };
+  const f = id ? findFood(id) : { name: '', portion: '1 porsi', protein: '', kcal: '', satFat: '', priceMin: '', priceMax: '', category: 'protein', fav: false };
   const field = (name, label, val, attrs = 'type="number" step="0.1" min="0" inputmode="decimal"') =>
     `<label class="field"><span>${label}</span><input class="input" name="${name}" value="${esc(val)}" ${attrs}></label>`;
+  const cat = f.category || 'protein';
   openModal({
     title: id ? 'Edit makanan' : 'Makanan baru',
     body: `<form id="foodForm" data-form="food" novalidate>
       <input type="hidden" name="id" value="${id || ''}">
       ${field('name', 'Nama makanan', f.name, 'type="text" placeholder="mis. Dada ayam rebus" required')}
-      ${field('portion', 'Ukuran porsi', f.portion, 'type="text" placeholder="mis. 100 g"')}
+      <div class="form-grid">
+        ${field('portion', 'Ukuran porsi', f.portion, 'type="text" placeholder="mis. 100 g"')}
+        <label class="field"><span>Kategori</span>
+          <select class="input" name="category">
+            <option value="protein" ${cat === 'protein' ? 'selected' : ''}>🍗 Sumber Protein</option>
+            <option value="karbo" ${cat === 'karbo' ? 'selected' : ''}>🍚 Karbo & Sayur</option>
+            <option value="suplemen" ${cat === 'suplemen' ? 'selected' : ''}>🥤 Suplemen & Susu</option>
+            <option value="camilan" ${cat === 'camilan' ? 'selected' : ''}>🍌 Camilan & Buah</option>
+          </select>
+        </label>
+      </div>
       <div class="form-grid">
         ${field('protein', 'Protein (g)', f.protein)}
         ${field('kcal', 'Kalori (kkal)', f.kcal, 'type="number" step="1" min="0" inputmode="numeric"')}
         ${field('satFat', 'Lemak jenuh (g)', f.satFat)}
-        <span></span>
+        <label class="field" style="justify-content:flex-end">
+          <span style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 0">
+            <input type="checkbox" name="fav" ${f.fav ? 'checked' : ''} style="width:18px;height:18px">
+            <b>⭐ Favorit</b>
+          </span>
+        </label>
         ${field('priceMin', 'Harga min (Rp)', f.priceMin, 'type="number" step="100" min="0" inputmode="numeric"')}
         ${field('priceMax', 'Harga maks (Rp, opsional)', f.priceMax || '', 'type="number" step="100" min="0" inputmode="numeric"')}
       </div>
@@ -2612,6 +3287,7 @@ function sessionHtml() {
   const date = ui.gymDate, s = state.settings;
   const wid = getWorkoutForDate(date);
   const sess = getSessionView(date);
+  const hasSavedSess = !!state.sessions[date] || (sess && sess.entries.some(e => e.sets.some(st => st.done)));
   const opts = Object.entries(state.program.workouts).map(([id, w]) => `<option value="${id}" ${id === wid ? 'selected' : ''}>${esc(w.name)} — ${esc(w.focus || '')}</option>`).join('') +
     `<option value="rest" ${!state.program.workouts[wid] ? 'selected' : ''}>Istirahat</option>`;
   const restOpts = [45, 60, 90, 120, 150, 180];
@@ -2625,6 +3301,7 @@ function sessionHtml() {
         <label><span class="muted small" style="font-weight:650">Istirahat</span>
           <select class="input input-sm" data-change="restQuick" id="restQuickSelect">${restOpts.sort((a, b) => a - b).map(v => `<option value="${v}" ${v === s.restSeconds ? 'selected' : ''}>${v} dtk</option>`).join('')}</select></label>
         <button class="btn btn-sm btn-soft" style="align-self:flex-end;height:38px" data-action="timerStart" id="timerStartBtn">⏱ Timer</button>
+        ${hasSavedSess ? `<button class="btn btn-sm btn-danger-soft" style="align-self:flex-end;height:38px" data-action="resetSession" id="resetSessionTopBtn" title="Reset/batalkan semua centang sesi ini">🗑️ Reset</button>` : ''}
       </div>
       ${sess ? (() => { const p = sessionProgress(sess); return `
         <div class="metric mt" style="margin-top:10px">
@@ -2649,7 +3326,10 @@ function sessionHtml() {
   html += `<div class="card">
       <label class="field"><span>📝 Catatan sesi</span>
         <textarea class="input" rows="3" data-change="sessionNote" id="sessionNote" placeholder="Energi, kualitas tidur, keluhan, dll.">${esc(sess.notes)}</textarea></label>
-      <button class="btn ${sess.completed ? '' : 'btn-primary'} btn-block" data-action="finishSession" id="finishSessionBtn">${sess.completed ? '↺ Tandai belum selesai' : '✓ Selesaikan sesi'}</button>
+      <div class="btn-row wrap">
+        <button class="btn ${sess.completed ? '' : 'btn-primary'} grow" data-action="finishSession" id="finishSessionBtn">${sess.completed ? '↺ Tandai belum selesai' : '✓ Selesaikan sesi'}</button>
+        ${hasSavedSess ? `<button class="btn btn-danger-soft" type="button" data-action="resetSession" title="Reset semua set di sesi tanggal ini">🗑️ Reset Sesi</button>` : ''}
+      </div>
     </div>`;
   return html;
 }
@@ -2661,7 +3341,8 @@ function exerciseCardHtml(en, i, date) {
   const isTime = en.unit === 'detik';
   const range = en.repMin === en.repMax ? `${en.repMin}` : `${en.repMin}-${en.repMax}`;
   const fmtSet = s => num(s.weight) > 0 ? `${s.weight}kg×${s.reps}` : `${s.reps}${isTime ? ' dtk' : ''}`;
-  const thumbUrl = en.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=200&auto=format&fit=crop&q=80';
+  const meta = QueryCache.resolveExMeta(en);
+  const thumbUrl = en.media || meta.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=200&auto=format&fit=crop&q=80';
 
   return `<div class="card ex-card ${done === en.sets.length ? 'complete' : ''}" id="ex-${i}">
     <div class="ex-top-row">
@@ -2684,7 +3365,7 @@ function exerciseCardHtml(en, i, date) {
       : '<div class="prev">Belum ada data sesi sebelumnya — mulai dari batas bawah beban.</div>'}
     ${sug ? `<div class="suggest ${sug.weight ? '' : 'info'}">📈 <div><b>${sug.title}</b><br><span style="font-weight:500">${sug.text}</span></div></div>` : ''}
     <div class="sets">
-      <div class="set-row set-head"><span>Set</span><span>Beban</span><span>${isTime ? 'Detik' : 'Rep'}${en.perSide ? '/' + en.perSide : ''}</span><span>✓</span></div>
+      <div class="set-row set-head"><span>Set</span><span>Beban</span><span>${isTime ? 'Detik' : 'Rep'}${en.perSide ? '/' + en.perSide : ''}</span><span>✓</span><span></span></div>
       ${en.sets.map((s, j) => `
         <div class="set-row ${s.done ? 'done' : ''}">
           <span class="set-no">${j + 1}</span>
@@ -2695,12 +3376,14 @@ function exerciseCardHtml(en, i, date) {
             <button type="button" data-action="repStep" data-ex="${i}" data-set="${j}" data-d="${isTime ? 5 : 1}" aria-label="Tambah">+</button>
           </div>
           <label class="check"><input type="checkbox" ${s.done ? 'checked' : ''} data-change="toggleSet" data-ex="${i}" data-set="${j}" aria-label="Set ${j + 1} selesai"><span></span></label>
+          <button type="button" class="set-del-btn" data-action="delSpecificSet" data-ex="${i}" data-set="${j}" title="${en.sets.length > 1 ? 'Hapus set ini (jika salah tambah)' : 'Reset set ini (jika salah pencet)'}" aria-label="Hapus atau reset set ${j + 1}">✕</button>
         </div>`).join('')}
     </div>
     <div class="ex-foot-bar">
-      <div class="row" style="gap:6px">
+      <div class="row" style="gap:6px;flex-wrap:wrap">
         <button type="button" class="btn btn-sm" data-action="addSet" data-ex="${i}">+ Set</button>
         ${en.sets.length > 1 ? `<button type="button" class="btn btn-sm" data-action="removeSet" data-ex="${i}">− Set</button>` : ''}
+        ${done > 0 ? `<button type="button" class="btn btn-sm btn-danger-soft" data-action="resetExSets" data-ex="${i}" title="Batalkan semua centang pada gerakan ini">↺ Batal Centang</button>` : ''}
       </div>
       ${done < en.sets.length ? `<button type="button" class="btn btn-sm btn-soft" data-action="completeAllSets" data-ex="${i}">✓ Selesai Semua Set</button>` : `<span class="chip chip-ok">Semua set tuntas 💪</span>`}
     </div>
@@ -2729,13 +3412,14 @@ function openMovementGuide(idx) {
   const sess = getSessionView(ui.gymDate);
   if (!sess || !sess.entries[idx]) return;
   const en = sess.entries[idx];
+  const meta = QueryCache.resolveExMeta(en);
 
-  const targetMuscles = en.target || 'Dada, Bahu, Triceps, Core';
-  const cuesList = (en.cues || '1. Jaga postur punggung tetap lurus.\n2. Gerakkan beban dengan tempo terkontrol.\n3. Bernapas teratur saat kontraksi.').split('\n').filter(Boolean);
-  const mistakes = en.mistakes || 'Mengayun tubuh untuk melempar beban; kehilangan kontrol tempo.';
+  const targetMuscles = en.target || meta.target || 'Dada, Bahu, Triceps, Core';
+  const cuesList = (en.cues || meta.cues || '1. Jaga postur punggung tetap lurus.\n2. Gerakkan beban dengan tempo terkontrol.\n3. Bernapas teratur saat kontraksi.').split('\n').filter(Boolean);
+  const mistakes = en.mistakes || meta.mistakes || 'Mengayun tubuh untuk melempar beban; kehilangan kontrol tempo.';
   const ytSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(en.name + ' dumbbell form')}`;
-  const videoSrc = en.video || `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(en.name + ' dumbbell')}`;
-  const photoSrc = en.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80';
+  const videoSrc = en.video || meta.video || `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(en.name + ' dumbbell')}`;
+  const photoSrc = en.media || meta.media || 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&auto=format&fit=crop&q=80';
 
   const bodyHtml = `
     <!-- Video Player / Foto Gerakan -->
@@ -2877,6 +3561,7 @@ function chartCard(id, title, sub, extra = '') {
 function renderProgress() {
   const s = state.settings, today = todayStr();
   const logs = sortedLogs().reverse();
+  const visibleLogs = ui.showAllLogs ? logs : logs.slice(0, 5);
   const hasMeasure = state.bodyLogs.some(l => l.arm || l.chest || l.thigh);
   const names = exerciseNames();
   if (!ui.chartExercise || !names.includes(ui.chartExercise)) ui.chartExercise = names.find(n => maxWeightSeries(n).data.length) || names[0];
@@ -2893,18 +3578,27 @@ function renderProgress() {
     <form class="card" data-form="bodyLog" id="bodyLogForm" novalidate>
       <h3 class="card-title">⚖️ Catat berat badan mingguan</h3>
       <div class="form-grid">
-        <label class="field"><span>Tanggal</span><input class="input" type="date" name="date" value="${today}" max="${today}"></label>
+        <label class="field"><span>Tanggal</span><input class="input" type="date" name="date" id="weightDateInput" value="${today}" max="${today}"></label>
         <label class="field"><span>Berat (kg) *</span><input class="input" type="number" step="0.1" min="20" inputmode="decimal" name="weight" id="weightInput" placeholder="${s.weight}" required></label>
       </div>
       <div class="form-grid three">
-        <label class="field"><span>Lengan (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="arm" placeholder="opsional"></label>
-        <label class="field"><span>Dada (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="chest" placeholder="opsional"></label>
-        <label class="field"><span>Paha (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="thigh" placeholder="opsional"></label>
+        <label class="field"><span>Lengan (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="arm" id="armInput" placeholder="opsional"></label>
+        <label class="field"><span>Dada (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="chest" id="chestInput" placeholder="opsional"></label>
+        <label class="field"><span>Paha (cm)</span><input class="input" type="number" step="0.1" inputmode="decimal" name="thigh" id="thighInput" placeholder="opsional"></label>
       </div>
       <button class="btn btn-primary btn-block" type="submit" id="saveWeightBtn">Simpan</button>
-      ${logs.length ? `<div class="divider"></div>${logs.slice(0, 5).map(l => `
+      ${logs.length ? `<div class="divider"></div>
+        <div class="row between mb" style="margin-bottom:6px">
+          <span class="small muted" style="font-weight:700">Riwayat Catatan (${logs.length} entri)</span>
+          ${logs.length > 5 ? `<button type="button" class="btn btn-sm" data-action="toggleAllLogs">${ui.showAllLogs ? 'Tampilkan 5 Terbaru' : `Lihat Semua (${logs.length})`}</button>` : ''}
+        </div>
+        ${visibleLogs.map(l => `
         <div class="log-item"><div class="grow"><b>${fmtNum(l.weight, 1)} kg</b> <span>${fmtDateLong(l.date)}${[l.arm && `lengan ${fmtNum(l.arm, 1)}`, l.chest && `dada ${fmtNum(l.chest, 1)}`, l.thigh && `paha ${fmtNum(l.thigh, 1)}`].filter(Boolean).map(x => ' · ' + x + ' cm').join('')}</span></div>
-          <button class="btn-icon ghost" type="button" data-action="delLog" data-id="${l.id}" aria-label="Hapus catatan">🗑️</button></div>`).join('')}` : ''}
+          <div class="row" style="gap:4px">
+            <button class="btn-icon ghost" type="button" data-action="editLog" data-id="${l.id}" title="Edit catatan ini" aria-label="Edit catatan">✏️</button>
+            <button class="btn-icon ghost" type="button" data-action="delLog" data-id="${l.id}" title="Hapus catatan ini" aria-label="Hapus catatan">🗑️</button>
+          </div>
+        </div>`).join('')}` : ''}
     </form>
 
     <div class="row between mb wrap"><h3>📈 Grafik</h3>${seg([['7', '7 hari'], ['14', '14 hari'], ['30', '30 hari']], String(ui.chartRange), 'chartRange')}</div>
@@ -3035,6 +3729,8 @@ create policy "Public Access" on ototku_sync for all using (true) with check (tr
         ${c.lastSyncedAt ? `<p class="muted small mt" style="text-align:right">Terakhir sinkron: ${new Date(c.lastSyncedAt).toLocaleString('id-ID')}</p>` : ''}
       </form>
     </div>
+
+    ${dbOptimizerCardHtml()}
 
     <!-- PROFIL & TARGET -->
     <form class="card" data-form="settings" id="settingsForm" novalidate>
@@ -3240,7 +3936,7 @@ function updateTabBadges() {
   const today = todayStr(), s = state.settings;
   const t = dayTotals(today);
   const sess = state.sessions[today];
-  const wid = scheduledWorkoutId(today);
+  const wid = getWorkoutForDate(today);
   const setBadge = (page, text, cls) => {
     $$(`.tab[data-page="${page}"]`).forEach(tab => {
       let b = tab.querySelector('.tab-badge');
@@ -3251,8 +3947,10 @@ function updateTabBadges() {
     });
   };
   if (t.protein >= s.proteinMin) setBadge('makan', '✓', 'ok');
-  else if (hasMeals(today)) setBadge('makan', `${Math.round(pct(t.protein, s.proteinTarget))}%`, '');
-  else setBadge('makan', '', '');
+  else if (hasMeals(today)) {
+    const pPct = Math.min(100, Math.round((t.protein / (s.proteinTarget || 1)) * 100));
+    setBadge('makan', `${pPct}%`, '');
+  } else setBadge('makan', '', '');
 
   if (sess?.completed) setBadge('gym', '✓', 'ok');
   else if (wid !== 'rest' && state.program.workouts[wid]) {
@@ -3269,6 +3967,7 @@ function updateTabBadges() {
   }
   const cm = $('#creatineModalContainer');
   if (cm) cm.innerHTML = creatineCardHtml(today, { scope: 'modal', showProtocol: true });
+  Undo.updateUI();
 }
 
 function go(page) {
@@ -3289,35 +3988,46 @@ function renderCurrent() {
   updateTabBadges();
 }
 
-function findMealEntry(id) {
-  const list = state.meals[ui.mealDate] || [];
-  return { list, idx: list.findIndex(e => e.id === id) };
+function findMealEntry(id, preferredDate) {
+  const d0 = preferredDate || ui.mealDate || todayStr();
+  const list0 = state.meals[d0] || [];
+  const idx0 = list0.findIndex(e => e.id === id);
+  if (idx0 >= 0) return { date: d0, list: list0, idx: idx0 };
+  for (const [d, list] of Object.entries(state.meals)) {
+    if (!Array.isArray(list)) continue;
+    const idx = list.findIndex(e => e.id === id);
+    if (idx >= 0) return { date: d, list, idx };
+  }
+  return { date: d0, list: list0, idx: -1 };
 }
-function removeMealEntry(id) {
-  const { list, idx } = findMealEntry(id);
+function removeMealEntry(id, preferredDate) {
+  const { date, list, idx } = findMealEntry(id, preferredDate);
   if (idx < 0) return;
+  const targetName = list[idx]?.name || 'Makanan';
+  Undo.capture(`Hapus ${targetName}`);
   const [removed] = list.splice(idx, 1);
-  const date = ui.mealDate;
   if (!list.length) delete state.meals[date];
+  QueryCache.invalidateMeals(date);
   save(); renderCurrent();
-  toast(`${esc(removed.name)} dihapus`, '', { label: 'Batalkan', fn: () => {
-    (state.meals[date] = state.meals[date] || []).splice(idx, 0, removed); save(); renderCurrent();
-  } });
+  toast(`🗑️ ${esc(removed.name)} dihapus`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
 }
 function applyTemplateTo(date) {
+  Undo.capture('Terapkan Menu Harian');
   const entries = [];
   MEAL_SLOTS.forEach(sl => (state.template[sl.id] || []).forEach(t => {
     const f = findFood(t.foodId);
     if (f) entries.push(makeMealEntry(f, sl.id, t.qty));
   }));
   state.meals[date] = entries;
+  QueryCache.invalidateMeals(date);
   save();
   const t = dayTotals(date);
-  toast(`⚡ Menu diterapkan: ${fmtNum(t.protein, 1)} g protein · ${fmtRp(t.cost)}`, 'ok');
+  toast(`⚡ Menu diterapkan: ${fmtNum(t.protein, 1)} g protein · ${fmtRp(t.cost)}`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
 }
 
 const actions = {
   nav: el => { haptic(8); navigate(el.dataset.page); },
+  undoLast: () => Undo.pop(),
   toggleTheme: () => { state.settings.theme = isDark() ? 'light' : 'dark'; save(); applyTheme(); renderCurrent(); },
   closeModal: () => closeModal(),
   dateShift: el => { haptic(8); const k = el.dataset.scope + 'Date'; ui[k] = addDays(ui[k], +el.dataset.dir); renderCurrent(); },
@@ -3346,6 +4056,7 @@ const actions = {
   },
   creatineProtocol: el => {
     haptic(12);
+    Undo.capture('Ubah protokol creatine');
     const mode = el.dataset.value;
     state.settings.creatineMode = mode;
     if (mode === 'loading') state.settings.creatineTarget = 20;
@@ -3361,6 +4072,7 @@ const actions = {
     const slotId = el.dataset.slot;
     const doseG = num(el.dataset.grams, 5);
     const cur = getCreatine(date);
+    Undo.capture(`Dosis creatine ${slotId}`);
     const slots = [...cur.slots];
     const idx = slots.indexOf(slotId);
     let nextGrams;
@@ -3374,7 +4086,7 @@ const actions = {
     setCreatine(date, { grams: nextGrams, slots });
     save();
     renderCurrent();
-    toast(idx >= 0 ? `Dosis dibatalkan (${fmtNum(nextGrams, 1)} g)` : `⚡ +${doseG} g tercatat (${fmtNum(nextGrams, 1)} / ${state.settings.creatineTarget || 20} g)`, idx >= 0 ? '' : 'ok');
+    toast(idx >= 0 ? `Dosis dibatalkan (${fmtNum(nextGrams, 1)} g)` : `⚡ +${doseG} g tercatat (${fmtNum(nextGrams, 1)} / ${state.settings.creatineTarget || 20} g)`, idx >= 0 ? '' : 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   creatineQuick: el => {
     haptic(18);
@@ -3382,32 +4094,38 @@ const actions = {
     const scoop = num(el.dataset.grams, state.settings.creatineTarget || 5);
     const target = state.settings.creatineTarget || 5;
     const cur = getCreatine(date);
+    Undo.capture(`Catat creatine +${scoop}g`);
     const nextGrams = cur.grams >= target ? round1(cur.grams + scoop) : Math.max(scoop, round1(cur.grams + scoop));
     setCreatine(date, { grams: nextGrams });
     save();
     renderCurrent();
-    toast(`⚡ Creatine ${fmtNum(nextGrams, 1)} g tercatat (${fmtDateShort(date)})`, 'ok');
+    toast(`⚡ Creatine ${fmtNum(nextGrams, 1)} g tercatat (${fmtDateShort(date)})`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   creatineStep: el => {
     haptic(10);
     const date = el.dataset.date || todayStr();
     const cur = getCreatine(date);
-    const next = Math.max(0, round1(cur.grams + num(el.dataset.d, 1)));
+    const d = num(el.dataset.d, 1);
+    const next = Math.max(0, round1(cur.grams + d));
+    if (next === cur.grams) return;
+    Undo.capture(`Ubah creatine ${d > 0 ? '+' : ''}${d}g`);
     setCreatine(date, { grams: next });
     save();
     renderCurrent();
     if (next >= (state.settings.creatineTarget || 5) && cur.grams < (state.settings.creatineTarget || 5)) {
-      toast(`⚡ Target creatine ${state.settings.creatineTarget || 5} g tercapai!`, 'ok');
+      toast(`⚡ Target creatine ${state.settings.creatineTarget || 5} g tercapai!`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
     }
   },
   creatineReset: el => {
     haptic(12);
     const date = el.dataset.date || todayStr();
     const prev = getCreatine(date);
+    if (prev.grams <= 0 && (!prev.slots || !prev.slots.length)) return;
+    Undo.capture('Reset creatine');
     setCreatine(date, { grams: 0, slots: [] });
     save();
     renderCurrent();
-    toast('Creatine direset', '', { label: 'Batalkan', fn: () => { setCreatine(date, prev); save(); renderCurrent(); } });
+    toast('🗑️ Creatine direset ke 0 g', '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   creatineTiming: el => {
     haptic(8);
@@ -3429,20 +4147,35 @@ const actions = {
     if (!d) return;
     const target = state.settings.creatineTarget || 5;
     const cur = getCreatine(d);
+    Undo.capture(`Creatine ${fmtDateShort(d)}`);
     const next = cur.grams >= target ? 0 : target;
     setCreatine(d, { grams: next });
     save();
     renderCurrent();
-    toast(next > 0 ? `⚡ ${fmtDateShort(d)}: ${next} g creatine ✓` : `${fmtDateShort(d)}: Creatine dikosongkan`, next > 0 ? 'ok' : '');
+    toast(next > 0 ? `⚡ ${fmtDateShort(d)}: ${next} g creatine ✓` : `🗑️ ${fmtDateShort(d)}: Creatine dikosongkan`, next > 0 ? 'ok' : '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   waterStep: el => {
     haptic(10);
     const date = el.dataset.date || todayStr();
     const cur = getCreatine(date);
-    const next = Math.max(0, cur.water + Math.round(num(el.dataset.d, 1)));
+    const d = Math.round(num(el.dataset.d, 1));
+    const next = Math.max(0, cur.water + d);
+    if (next === cur.water) return;
+    Undo.capture(`Air minum ${d > 0 ? '+' : ''}${d} gelas`);
     setCreatine(date, { water: next });
     save();
     renderCurrent();
+  },
+  waterReset: el => {
+    haptic(12);
+    const date = el.dataset.date || todayStr();
+    const cur = getCreatine(date);
+    if (cur.water <= 0) return;
+    Undo.capture('Reset air minum');
+    setCreatine(date, { water: 0 });
+    save();
+    renderCurrent();
+    toast('🗑️ Catatan air minum direset ke 0 gelas', '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
 
   // Cloud badge quick modal
@@ -3629,19 +4362,53 @@ const actions = {
   goWeight: () => { navigate('progres'); setTimeout(() => { const i = $('#weightInput'); if (i) { i.scrollIntoView({ behavior: 'smooth', block: 'center' }); i.focus({ preventScroll: true }); } }, 120); },
   applyTemplateToday: () => { applyTemplateTo(todayStr()); renderCurrent(); },
 
-  // Makan
+  // Makan & Database Makanan
   mealTab: el => { ui.mealTab = el.dataset.value; renderMeals(); },
   openAddFood: el => openAddFood(el.dataset.slot),
   addFood: el => {
     haptic(12);
     const f = findFood(el.dataset.id); if (!f) return;
+    Undo.capture(`Tambah ${f.name}`);
     const list = (state.meals[ui.mealDate] = state.meals[ui.mealDate] || []);
     const existing = list.find(e => e.foodId === f.id && e.slot === ui.addSlot && !e.sample);
     if (existing) existing.qty = round1(existing.qty + 1); else list.push(makeMealEntry(f, ui.addSlot, 1));
+    QueryCache.invalidateMeals(ui.mealDate);
     save(); renderCurrent();
-    const searchEl = $('#foodSearchInput');
-    if (searchEl && $('#foodPickList')) $('#foodPickList').innerHTML = foodPickHtml(searchEl.value);
-    toast(`✓ ${esc(f.name)} ditambahkan`, 'ok');
+    const searchEl = $('#foodSearch');
+    if ($('#foodPickList')) $('#foodPickList').innerHTML = foodPickHtml(searchEl ? searchEl.value : '');
+    toast(`✓ +1 ${esc(f.name)} ditambahkan`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  subFoodModal: el => {
+    haptic(10);
+    const f = findFood(el.dataset.id); if (!f) return;
+    const list = state.meals[ui.mealDate] || [];
+    const idx = list.findIndex(e => e.foodId === f.id && e.slot === ui.addSlot);
+    if (idx < 0) return;
+    Undo.capture(`Kurangi ${f.name}`);
+    const nextQty = round1(list[idx].qty - 1);
+    if (nextQty <= 0) list.splice(idx, 1);
+    else list[idx].qty = nextQty;
+    if (!list.length) delete state.meals[ui.mealDate];
+    QueryCache.invalidateMeals(ui.mealDate);
+    save(); renderCurrent();
+    const searchEl = $('#foodSearch');
+    if ($('#foodPickList')) $('#foodPickList').innerHTML = foodPickHtml(searchEl ? searchEl.value : '');
+    toast(nextQty <= 0 ? `🗑️ ${esc(f.name)} dihapus dari waktu makan ini` : `−1 porsi ${esc(f.name)} (sisa ${fmtNum(nextQty, 1)}×)`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  delFoodModal: el => {
+    haptic(12);
+    const f = findFood(el.dataset.id); if (!f) return;
+    const list = state.meals[ui.mealDate] || [];
+    const hasAny = list.some(e => e.foodId === f.id && e.slot === ui.addSlot);
+    if (!hasAny) return;
+    Undo.capture(`Hapus ${f.name}`);
+    state.meals[ui.mealDate] = list.filter(e => !(e.foodId === f.id && e.slot === ui.addSlot));
+    if (!state.meals[ui.mealDate].length) delete state.meals[ui.mealDate];
+    QueryCache.invalidateMeals(ui.mealDate);
+    save(); renderCurrent();
+    const searchEl = $('#foodSearch');
+    if ($('#foodPickList')) $('#foodPickList').innerHTML = foodPickHtml(searchEl ? searchEl.value : '');
+    toast(`🗑️ ${esc(f.name)} dihapus`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   quickAddFood: el => {
     haptic(12);
@@ -3649,43 +4416,59 @@ const actions = {
     const date = el.dataset.date || ui.mealDate || todayStr();
     const slot = el.dataset.slot || 'pagi';
     const qty = Math.max(0.5, round1(num(el.dataset.qty, 1)));
+    Undo.capture(`Tambah cepat ${f.name}`);
     const list = (state.meals[date] = state.meals[date] || []);
     const existing = list.find(e => e.foodId === f.id && e.slot === slot && !e.sample);
-    let addedEntry = null;
     if (existing) {
       existing.qty = round1(existing.qty + qty);
     } else {
-      addedEntry = makeMealEntry(f, slot, qty);
-      list.push(addedEntry);
+      list.push(makeMealEntry(f, slot, qty));
     }
+    QueryCache.invalidateMeals(date);
     save(); renderCurrent();
     toast(`⚡ +${fmtNum(qty, 1)}× ${esc(f.name)} (+${fmtNum(f.protein * qty, 1)}g prot)`, 'ok', {
-      label: 'Batalkan',
-      fn: () => {
-        const curList = state.meals[date] || [];
-        if (addedEntry) {
-          const idx = curList.findIndex(x => x.id === addedEntry.id);
-          if (idx >= 0) curList.splice(idx, 1);
-        } else if (existing) {
-          existing.qty = round1(existing.qty - qty);
-          if (existing.qty <= 0) {
-            const idx = curList.findIndex(x => x.id === existing.id);
-            if (idx >= 0) curList.splice(idx, 1);
-          }
-        }
-        if (!curList.length) delete state.meals[date];
-        save(); renderCurrent();
-      }
+      label: '↩️ Batalkan',
+      fn: () => Undo.pop()
     });
   },
   qtyStep: el => {
     haptic(8);
-    const { list, idx } = findMealEntry(el.dataset.id); if (idx < 0) return;
+    const { date, list, idx } = findMealEntry(el.dataset.id, el.dataset.date); if (idx < 0) return;
     const q = round1(list[idx].qty + Number(el.dataset.d));
-    if (q <= 0) return removeMealEntry(el.dataset.id);
-    list[idx].qty = q; save(); renderCurrent();
+    if (q <= 0) return removeMealEntry(el.dataset.id, date);
+    Undo.capture(`Ubah porsi ${list[idx].name}`);
+    list[idx].qty = q;
+    QueryCache.invalidateMeals(date);
+    save(); renderCurrent();
   },
-  delEntry: el => removeMealEntry(el.dataset.id),
+  delEntry: el => removeMealEntry(el.dataset.id, el.dataset.date),
+  clearMealSlot: el => {
+    haptic(14);
+    const date = el.dataset.date || ui.mealDate || todayStr();
+    const slot = el.dataset.slot;
+    const list = state.meals[date] || [];
+    const slotItems = list.filter(e => e.slot === slot);
+    if (!slotItems.length) return;
+    const sl = MEAL_SLOTS.find(x => x.id === slot);
+    Undo.capture(`Kosongkan makan ${sl ? sl.label : slot}`);
+    const remaining = list.filter(e => e.slot !== slot);
+    if (remaining.length) state.meals[date] = remaining;
+    else delete state.meals[date];
+    QueryCache.invalidateMeals(date);
+    save(); renderCurrent();
+    toast(`🗑️ Catatan makan ${sl ? sl.label : slot} (${slotItems.length} item) dikosongkan`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  clearMealDay: el => {
+    haptic(16);
+    const date = el.dataset.date || ui.mealDate || todayStr();
+    const list = state.meals[date] || [];
+    if (!list.length) return;
+    Undo.capture(`Kosongkan makan ${fmtDateShort(date)}`);
+    delete state.meals[date];
+    QueryCache.invalidateMeals(date);
+    save(); renderCurrent();
+    toast(`🗑️ Semua catatan makan ${fmtDateShort(date)} (${list.length} item) dikosongkan`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
   applyTemplate: async () => {
     const date = ui.mealDate;
     if (hasMeals(date) && !(await confirmDialog('Catatan pada tanggal ini akan diganti dengan "Menu Harian Saya". Lanjutkan?', { ok: 'Ganti' }))) return;
@@ -3695,28 +4478,88 @@ const actions = {
     const date = ui.mealDate, src = state.meals[addDays(date, -1)] || [];
     if (!src.length) return toast('Tidak ada catatan pada hari sebelumnya', 'warn');
     if (hasMeals(date) && !(await confirmDialog('Ganti catatan hari ini dengan salinan hari sebelumnya?', { ok: 'Ganti' }))) return;
+    Undo.capture('Salin makan kemarin');
     state.meals[date] = src.map(e => { const c = { ...e, id: uid() }; delete c.sample; return c; });
-    save(); renderCurrent(); toast('📋 Catatan kemarin disalin', 'ok');
+    QueryCache.invalidateMeals(date);
+    save(); renderCurrent();
+    toast('📋 Catatan kemarin disalin', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   saveTemplate: async () => {
     const list = state.meals[ui.mealDate] || [];
     if (!list.length) return toast('Catat makanan dulu sebelum menjadikannya template', 'warn');
     if (!(await confirmDialog('Jadikan menu tanggal ini sebagai "Menu Harian Saya"?', { ok: 'Simpan template' }))) return;
+    Undo.capture('Simpan template makan');
     const tpl = { pagi: [], sore: [], malam: [] };
     list.forEach(e => { if (findFood(e.foodId) && tpl[e.slot]) {
       const ex = tpl[e.slot].find(t => t.foodId === e.foodId);
       if (ex) ex.qty += e.qty; else tpl[e.slot].push({ foodId: e.foodId, qty: e.qty });
     } });
-    state.template = tpl; save(); toast('💾 Template diperbarui', 'ok');
+    state.template = tpl; save(); toast('💾 Template diperbarui', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  toggleFoodFav: el => {
+    haptic(10);
+    const f = findFood(el.dataset.id); if (!f) return;
+    f.fav = !f.fav;
+    QueryCache.invalidateFood();
+    save();
+    if ($('#dbFoodList')) $('#dbFoodList').innerHTML = foodDbListHtml();
+    if ($('#foodPickList')) {
+      const searchEl = $('#foodSearch');
+      $('#foodPickList').innerHTML = foodPickHtml(searchEl ? searchEl.value : '');
+    }
+    toast(f.fav ? `⭐ ${esc(f.name)} ditambahkan ke favorit` : `${esc(f.name)} dihapus dari favorit`, f.fav ? 'ok' : '');
+  },
+  dbFoodCat: el => {
+    haptic(8);
+    ui.dbCat = el.dataset.cat || 'all';
+    $$('.cat-pill[data-action="dbFoodCat"]').forEach(b => b.classList.toggle('active', b.dataset.cat === ui.dbCat));
+    const listEl = $('#dbFoodList');
+    if (listEl) listEl.innerHTML = foodDbListHtml();
   },
   openFoodForm: el => openFoodForm(el.dataset.id, !!el.dataset.fromAdd),
   backToAdd: () => openAddFood(ui.addSlot),
-  delFood: async el => {
+  delFood: el => {
+    haptic(14);
     const f = findFood(el.dataset.id); if (!f) return;
-    if (!(await confirmDialog(`Hapus "${esc(f.name)}" dari database? Catatan lama tetap tersimpan.`, { ok: 'Hapus', danger: true }))) return;
+    Undo.capture(`Hapus menu ${f.name}`);
     state.foods = state.foods.filter(x => x.id !== f.id);
     MEAL_SLOTS.forEach(sl => { state.template[sl.id] = (state.template[sl.id] || []).filter(t => t.foodId !== f.id); });
-    save(); renderCurrent(); toast('Makanan dihapus');
+    QueryCache.invalidateFood();
+    save(); renderCurrent();
+    toast(`🗑️ "${esc(f.name)}" dihapus dari database`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  restoreBuiltinFoods: () => {
+    haptic(14);
+    Undo.capture('Pulihkan makanan bawaan');
+    let added = 0;
+    DEFAULT_FOODS.forEach(df => {
+      const existing = state.foods.find(f => f.id === df.id);
+      if (!existing) {
+        state.foods.push(clone(df));
+        added++;
+      } else {
+        existing.category = existing.category || df.category || 'protein';
+      }
+    });
+    QueryCache.invalidateFood();
+    save(); renderCurrent();
+    toast(added > 0 ? `✓ ${added} makanan bawaan dipulihkan (total ${state.foods.length} menu)` : '✓ Semua makanan bawaan sudah lengkap', 'ok');
+  },
+  optimizeDbNow: () => {
+    haptic(16);
+    const before = DBOptimizer.stats();
+    DBOptimizer.cleanInPlace(state);
+    QueryCache.invalidateAll();
+    save();
+    const after = DBOptimizer.stats();
+    renderCurrent();
+    toast(`⚡ Database dioptimalkan! Ukuran simpan: ${fmtNum(after.compactBytes / 1024, 1)} KB (hemat ${after.savedPct}% dari ${fmtNum(before.rawBytes / 1024, 1)} KB)`, 'ok');
+  },
+  smartMergeCloud: async () => {
+    haptic(14);
+    toast('🔀 Menarik & menggabungkan data Cloud secara cerdas...', '');
+    Cloud.setupClient();
+    await Cloud.pull({ manual: true });
   },
 
   // Gym
@@ -3743,6 +4586,7 @@ const actions = {
   addSet: el => {
     haptic(10);
     const i = +el.dataset.ex;
+    Undo.capture('Tambah set latihan');
     const sess = commitSession(ui.gymDate); if (!sess) return;
     const en = sess.entries[i]; if (!en) return;
     const last = en.sets[en.sets.length - 1];
@@ -3752,20 +4596,64 @@ const actions = {
       weight: last ? num(last.weight, en.wMin) : en.wMin
     });
     save(); renderCurrent();
-    toast(`➕ Set #${en.sets.length} ditambahkan pada ${esc(en.name)}`);
+    toast(`➕ Set #${en.sets.length} ditambahkan pada ${esc(en.name)}`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   removeSet: el => {
     haptic(10);
     const i = +el.dataset.ex;
     const sess = commitSession(ui.gymDate); if (!sess) return;
     const en = sess.entries[i]; if (!en || en.sets.length <= 1) return;
+    Undo.capture(`Hapus set ${en.name}`);
     en.sets.pop();
     save(); renderCurrent();
-    toast(`➖ Set terakhir dihapus dari ${esc(en.name)}`);
+    toast(`➖ Set terakhir dihapus dari ${esc(en.name)}`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  delSpecificSet: el => {
+    haptic(12);
+    const i = +el.dataset.ex, j = +el.dataset.set;
+    const sess = commitSession(ui.gymDate); if (!sess) return;
+    const en = sess.entries[i]; if (!en || !en.sets[j]) return;
+    Undo.capture(`Hapus/reset set #${j + 1} ${en.name}`);
+    if (en.sets.length > 1) {
+      en.sets.splice(j, 1);
+      Timer.stop();
+      save(); renderCurrent();
+      toast(`🗑️ Set #${j + 1} dihapus dari ${esc(en.name)}`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+    } else {
+      en.sets[0] = { done: false, reps: '', weight: en.wMin };
+      sess.completed = false;
+      Timer.stop();
+      save(); renderCurrent();
+      toast(`↺ Set #1 ${esc(en.name)} direset`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+    }
+  },
+  resetExSets: el => {
+    haptic(14);
+    const i = +el.dataset.ex;
+    const sess = commitSession(ui.gymDate); if (!sess) return;
+    const en = sess.entries[i]; if (!en) return;
+    Undo.capture(`Batal centang ${en.name}`);
+    en.sets.forEach(s => { s.done = false; });
+    sess.completed = false;
+    Timer.stop();
+    save(); renderCurrent();
+    toast(`↺ Semua centang set ${esc(en.name)} dibatalkan`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
+  },
+  resetSession: () => {
+    haptic(16);
+    const date = ui.gymDate;
+    if (!state.sessions[date] && (!ui.draft || ui.draft.date !== date)) return;
+    Undo.capture(`Reset sesi gym ${fmtDateShort(date)}`);
+    delete state.sessions[date];
+    ui.draft = null;
+    Timer.stop();
+    save(); renderCurrent();
+    toast(`🗑️ Sesi latihan ${fmtDateShort(date)} direset`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   completeAllSets: el => {
     haptic(18);
     const i = +el.dataset.ex;
+    Undo.capture('Selesai semua set');
     const sess = commitSession(ui.gymDate); if (!sess) return;
     const en = sess.entries[i]; if (!en) return;
     const allDone = en.sets.every(s => s.done);
@@ -3773,28 +4661,39 @@ const actions = {
       s.done = !allDone;
       if (s.done && (s.reps === '' || s.reps == null)) s.reps = en.repMin;
     });
+    if (allDone) {
+      sess.completed = false;
+      Timer.stop();
+    }
     save(); renderCurrent();
     const p = sessionProgress(sess);
     if (!allDone) {
-      if (p.done === p.total) { Timer.stop(); toast('💪 Semua set latihan hari ini selesai! Tekan "Selesaikan sesi".', 'ok'); }
+      if (p.done === p.total) { Timer.stop(); toast('💪 Semua set latihan hari ini selesai! Tekan "Selesaikan sesi".', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() }); }
       else Timer.start(state.settings.restSeconds, `Istirahat · ${en.name}`);
+    } else {
+      toast(`↺ Centang set ${esc(en.name)} dibatalkan`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
     }
   },
   finishSession: () => {
+    Undo.capture('Status selesai sesi gym');
     const sess = commitSession(ui.gymDate) || state.sessions[ui.gymDate]; if (!sess) return;
     sess.completed = !sess.completed;
     save(); renderCurrent();
     if (sess.completed) {
       const p = sessionProgress(sess);
-      toast(`🎉 Sesi selesai! ${p.done}/${p.total} set · minggu ini ${sessionsInWeek(weekStart(todayStr()))}/${weeklySessionTarget()}`, 'ok');
+      toast(`🎉 Sesi selesai! ${p.done}/${p.total} set · minggu ini ${sessionsInWeek(weekStart(todayStr()))}/${weeklySessionTarget()}`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
       Timer.stop();
+    } else {
+      toast('↺ Sesi ditandai belum selesai', '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
     }
   },
   editEx: el => openExerciseForm(el.dataset.wid, el.dataset.exid),
   delEx: async el => {
     const w = state.program.workouts[el.dataset.wid], e = w.exercises.find(x => x.id === el.dataset.exid);
-    if (!(await confirmDialog(`Hapus latihan "${esc(e.name)}" dari ${esc(w.name)}?`, { ok: 'Hapus', danger: true }))) return;
-    w.exercises = w.exercises.filter(x => x.id !== e.id); ui.draft = null; save(); renderCurrent();
+    if (!e) return;
+    Undo.capture(`Hapus latihan ${e.name}`);
+    w.exercises = w.exercises.filter(x => x.id !== e.id); ui.draft = null; QueryCache.invalidateExMeta(); save(); renderCurrent();
+    toast(`🗑️ Latihan "${esc(e.name)}" dihapus`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   moveEx: el => {
     const list = state.program.workouts[el.dataset.wid].exercises, i = +el.dataset.idx, j = i + Number(el.dataset.dir);
@@ -3805,16 +4704,43 @@ const actions = {
   delWorkout: async el => {
     const wid = el.dataset.wid, w = state.program.workouts[wid];
     if (!(await confirmDialog(`Hapus hari latihan "${esc(w.name)}"? Jadwal yang memakainya akan menjadi istirahat. Riwayat sesi tetap tersimpan.`, { ok: 'Hapus', danger: true }))) return;
+    Undo.capture(`Hapus hari latihan ${w.name}`);
     delete state.program.workouts[wid];
     Object.keys(state.program.schedule).forEach(d => { if (state.program.schedule[d] === wid) state.program.schedule[d] = 'rest'; });
-    ui.draft = null; save(); renderCurrent();
+    ui.draft = null; QueryCache.invalidateExMeta(); save(); renderCurrent();
+    toast(`🗑️ Hari latihan "${esc(w.name)}" dihapus`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
 
   // Progres
   chartRange: el => { ui.chartRange = Number(el.dataset.value); renderProgress(); },
-  delLog: async el => {
-    if (!(await confirmDialog('Hapus catatan berat badan ini?', { ok: 'Hapus', danger: true }))) return;
-    state.bodyLogs = state.bodyLogs.filter(l => l.id !== el.dataset.id); save(); renderProgress();
+  toggleAllLogs: () => { ui.showAllLogs = !ui.showAllLogs; renderProgress(); },
+  editLog: el => {
+    haptic(10);
+    const l = state.bodyLogs.find(x => x.id === el.dataset.id);
+    if (!l) return;
+    const dIn = $('#weightDateInput'), wIn = $('#weightInput'), aIn = $('#armInput'), cIn = $('#chestInput'), tIn = $('#thighInput');
+    if (dIn) dIn.value = l.date;
+    if (wIn) wIn.value = l.weight;
+    if (aIn) aIn.value = l.arm ?? '';
+    if (cIn) cIn.value = l.chest ?? '';
+    if (tIn) tIn.value = l.thigh ?? '';
+    const f = $('#bodyLogForm');
+    if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (wIn) wIn.focus({ preventScroll: true });
+    toast(`✏️ Mengedit catatan tanggal ${fmtDateShort(l.date)}`, 'ok');
+  },
+  delLog: el => {
+    haptic(14);
+    const target = state.bodyLogs.find(l => l.id === el.dataset.id);
+    if (!target) return;
+    Undo.capture(`Hapus berat ${target.weight} kg`);
+    state.bodyLogs = state.bodyLogs.filter(l => l.id !== el.dataset.id);
+    const rem = sortedLogs();
+    if (rem.length) {
+      applyWeight(rem[rem.length - 1].weight, true);
+    }
+    save(); renderProgress();
+    toast(`🗑️ Catatan berat ${fmtNum(target.weight, 1)} kg (${fmtDateShort(target.date)}) dihapus`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
 
   // Pengaturan
@@ -3833,15 +4759,18 @@ const actions = {
   importData: () => $('#importFile').click(),
   clearSample: async () => {
     if (!(await confirmDialog('Hapus semua data contoh? Data yang Anda masukkan sendiri tetap aman.', { ok: 'Hapus data contoh', danger: true }))) return;
-    removeSampleData(); renderCurrent(); toast('🧹 Data contoh dihapus', 'ok');
+    Undo.capture('Hapus data contoh');
+    removeSampleData(); renderCurrent(); toast('🧹 Data contoh dihapus', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
-  loadSample: () => { generateSampleData(); save(); renderCurrent(); toast('✨ Data contoh dimuat', 'ok'); },
+  loadSample: () => { Undo.capture('Muat data contoh'); generateSampleData(); QueryCache.invalidateAll(); save(); renderCurrent(); toast('✨ Data contoh dimuat', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() }); },
   resetAll: async () => {
     if (!(await confirmDialog('Semua data (makan, gym, berat, pengaturan) akan dihapus permanen. Export dulu jika perlu. Lanjutkan?', { ok: 'Reset semua', danger: true }))) return;
+    Undo.capture('Reset semua data');
     const theme = state.settings.theme;
     state = createDefaultState(); state.settings.theme = theme;
     ui.draft = null; ui.gymOverride = {};
-    save(); applyTheme(); renderCurrent(); toast('Data direset');
+    QueryCache.invalidateAll();
+    save(); applyTheme(); renderCurrent(); toast('Data direset', '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
 };
 
@@ -3850,21 +4779,32 @@ const changes = {
   creatineSet: el => {
     const date = el.dataset.date || todayStr();
     const v = Math.max(0, round1(num(el.value, 0)));
+    Undo.capture('Input gram creatine');
     setCreatine(date, { grams: v });
     save();
     renderCurrent();
   },
   qtySet: el => {
     const v = round1(num(el.value));
-    if (v <= 0) return removeMealEntry(el.dataset.id);
-    const { list, idx } = findMealEntry(el.dataset.id); if (idx < 0) return;
-    list[idx].qty = v; save(); renderCurrent();
+    if (v <= 0) return removeMealEntry(el.dataset.id, el.dataset.date);
+    const { date, list, idx } = findMealEntry(el.dataset.id, el.dataset.date); if (idx < 0) return;
+    Undo.capture(`Set porsi ${list[idx].name}`);
+    list[idx].qty = v;
+    QueryCache.invalidateMeals(date);
+    save(); renderCurrent();
+  },
+  dbFoodSort: el => {
+    ui.dbSort = el.value || 'fav';
+    const listEl = $('#dbFoodList');
+    if (listEl) listEl.innerHTML = foodDbListHtml();
+    else renderMeals();
   },
   gymWorkout: async el => {
     const date = ui.gymDate, val = el.value, existing = state.sessions[date];
     if (existing) {
       const hasData = existing.entries.some(e => e.sets.some(s => s.done));
       if (hasData && !(await confirmDialog('Sesi ini sudah berisi data. Mengganti latihan akan menghapus data sesi tanggal ini. Lanjutkan?', { ok: 'Ganti', danger: true }))) { renderGym(); return; }
+      Undo.capture(`Ganti latihan ${fmtDateShort(date)}`);
       delete state.sessions[date]; save();
     }
     ui.gymOverride[date] = val; ui.draft = null; renderCurrent();
@@ -3873,21 +4813,27 @@ const changes = {
   toggleSet: el => {
     haptic(16);
     const i = +el.dataset.ex, j = +el.dataset.set;
+    Undo.capture(el.checked ? `Centang set #${j + 1}` : `Batal centang set #${j + 1}`);
     const sess = commitSession(ui.gymDate); if (!sess) return;
     const en = sess.entries[i], set = en.sets[j], row = el.closest('.set-row');
     set.done = el.checked;
-    const w = row.querySelector('[data-field="weight"]'); if (w) set.weight = num(w.value);
+    const w = row?.querySelector('[data-field="weight"]'); if (w) set.weight = num(w.value);
     if (set.done && (set.reps === '' || set.reps == null)) {
       set.reps = en.repMin;
-      const r = row.querySelector('[data-field="reps"]'); if (r) r.value = set.reps;
+      const r = row?.querySelector('[data-field="reps"]'); if (r) r.value = set.reps;
     }
-    row.classList.toggle('done', set.done);
+    if (!set.done) {
+      sess.completed = false;
+      Timer.stop();
+    }
     save();
-    const p = refreshSessionProgress(sess);
-    updateTabBadges();
+    renderCurrent();
+    const p = sessionProgress(sess);
     if (set.done) {
-      if (p.done === p.total) { Timer.stop(); toast('💪 Semua set selesai! Tekan "Selesaikan sesi".', 'ok'); }
+      if (p.done === p.total) { Timer.stop(); toast('💪 Semua set selesai! Tekan "Selesaikan sesi".', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() }); }
       else Timer.start(state.settings.restSeconds, `Istirahat · ${en.name} (Set ${j + 1}/${en.sets.length})`);
+    } else {
+      toast(`↺ Set #${j + 1} (${esc(en.name)}) dibatalkan`, '', { label: '↩️ Batalkan', fn: () => Undo.pop() });
     }
   },
   setField: el => {
@@ -3905,6 +4851,11 @@ const changes = {
 
 const inputs = {
   foodSearch: el => { $('#foodPickList').innerHTML = foodPickHtml(el.value); },
+  dbFoodSearch: el => {
+    ui.dbSearch = el.value;
+    const listEl = $('#dbFoodList');
+    if (listEl) listEl.innerHTML = foodDbListHtml();
+  },
   weightRecalc: el => {
     const w = num(el.value), s = state.settings;
     if (w < 20) return;
@@ -3918,10 +4869,23 @@ const forms = {
   food: f => {
     const d = formData(f), name = (d.name || '').trim();
     if (!name) return toast('Nama makanan wajib diisi', 'warn');
-    const food = { id: d.id || 'f_' + uid(), name, portion: (d.portion || '1 porsi').trim(),
-      protein: num(d.protein), kcal: num(d.kcal), satFat: num(d.satFat), priceMin: num(d.priceMin), priceMax: num(d.priceMax) };
+    Undo.capture(`Simpan makanan ${name}`);
+    const favChecked = !!f.querySelector('input[name="fav"]')?.checked;
+    const food = {
+      id: d.id || 'f_' + uid(),
+      name,
+      portion: (d.portion || '1 porsi').trim(),
+      category: d.category || 'protein',
+      fav: favChecked,
+      protein: num(d.protein),
+      kcal: num(d.kcal),
+      satFat: num(d.satFat),
+      priceMin: num(d.priceMin),
+      priceMax: num(d.priceMax)
+    };
     const idx = state.foods.findIndex(x => x.id === food.id);
     if (idx >= 0) state.foods[idx] = { ...state.foods[idx], ...food }; else state.foods.push(food);
+    QueryCache.invalidateFood();
     save(); toast(`✓ ${esc(name)} disimpan`, 'ok');
     renderMeals();
     if (ui.foodFormFromAdd) openAddFood(ui.addSlot); else closeModal();
@@ -3930,6 +4894,7 @@ const forms = {
     const d = formData(f), w = state.program.workouts[d.wid];
     const name = (d.name || '').trim();
     if (!name) return toast('Nama latihan wajib diisi', 'warn');
+    Undo.capture(`Simpan latihan ${name}`);
     const repMin = Math.max(1, Math.round(num(d.repMin, 1))), wMin = num(d.wMin);
     const e = {
       id: d.exid || uid(), name, sets: Math.min(10, Math.max(1, Math.round(num(d.sets, 3)))),
@@ -3940,26 +4905,28 @@ const forms = {
     };
     const idx = w.exercises.findIndex(x => x.id === e.id);
     if (idx >= 0) w.exercises[idx] = e; else w.exercises.push(e);
-    ui.draft = null; save(); closeModal(); renderGym(); toast('✓ Latihan disimpan', 'ok');
+    ui.draft = null; QueryCache.invalidateExMeta(); save(); closeModal(); renderGym(); toast('✓ Latihan disimpan', 'ok');
   },
   workout: f => {
     const d = formData(f), name = (d.name || '').trim();
     if (!name) return toast('Nama wajib diisi', 'warn');
+    Undo.capture(`Simpan hari latihan ${name}`);
     if (d.wid) Object.assign(state.program.workouts[d.wid], { name, focus: (d.focus || '').trim() });
     else state.program.workouts['w_' + uid()] = { name, focus: (d.focus || '').trim(), exercises: [] };
-    ui.draft = null; save(); closeModal(); renderGym(); toast('✓ Disimpan', 'ok');
+    ui.draft = null; QueryCache.invalidateExMeta(); save(); closeModal(); renderGym(); toast('✓ Disimpan', 'ok');
   },
   bodyLog: f => {
     const d = formData(f), w = num(d.weight, NaN);
     if (!(w >= 20 && w <= 300)) return toast('Masukkan berat badan yang valid', 'warn');
+    Undo.capture(`Catat berat ${round1(w)} kg`);
     const opt = v => (v === '' || v == null) ? null : num(v);
     const log = { id: uid(), date: d.date || todayStr(), weight: round1(w), arm: opt(d.arm), chest: opt(d.chest), thigh: opt(d.thigh) };
     const idx = state.bodyLogs.findIndex(l => l.date === log.date);
     if (idx >= 0) state.bodyLogs[idx] = log; else state.bodyLogs.push(log);
     const latest = sortedLogs().pop();
-    toast('⚖️ Berat badan tersimpan', 'ok');
-    if (latest.id === log.id && log.weight !== state.settings.weight) applyWeight(log.weight, true);
+    if (latest && latest.id === log.id && log.weight !== state.settings.weight) applyWeight(log.weight, true);
     save(); renderProgress();
+    toast(`⚖️ Berat badan ${fmtNum(log.weight, 1)} kg tersimpan`, 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   },
   settings: f => {
     const d = formData(f), s = state.settings;
@@ -3968,6 +4935,7 @@ const forms = {
     if (!(pMin > 0 && pMin <= pT && pT <= pMax)) return toast('Pastikan protein min ≤ ideal ≤ maks', 'warn');
     const dbs = [...new Set(String(d.dumbbells).split(/[,;\s]+/).map(Number).filter(n => n > 0))].sort((a, b) => a - b);
     if (!dbs.length) return toast('Masukkan minimal satu ukuran dumbbell', 'warn');
+    Undo.capture('Ubah pengaturan profil');
     Object.assign(s, {
       weight: round1(num(d.weight)), goal: (d.goal || '').trim() || DEFAULT_SETTINGS.goal,
       proteinMin: Math.round(pMin), proteinTarget: Math.round(pT), proteinMax: Math.round(pMax),
@@ -4010,10 +4978,12 @@ function handleImport(file) {
     catch (err) { return toast('File bukan JSON yang valid', 'bad'); }
     if (!data || typeof data !== 'object' || !data.settings || !Array.isArray(data.foods)) return toast('Format data tidak dikenali', 'bad');
     if (!(await confirmDialog('Data saat ini akan diganti dengan isi file. Lanjutkan impor?', { ok: 'Impor' }))) return;
+    Undo.capture('Impor file backup');
     delete data.app; delete data.exportedAt;
     state = normalizeState(data);
     ui.draft = null; ui.gymOverride = {};
-    save(); applyTheme(); renderCurrent(); toast('⬆️ Data berhasil diimpor', 'ok');
+    QueryCache.invalidateAll();
+    save(); applyTheme(); renderCurrent(); toast('⬆️ Data berhasil diimpor', 'ok', { label: '↩️ Batalkan', fn: () => Undo.pop() });
   };
   reader.onerror = () => toast('Gagal membaca file', 'bad');
   reader.readAsText(file);
@@ -4042,7 +5012,16 @@ function bindEvents() {
     if (forms[f.dataset.form]) forms[f.dataset.form](f);
   });
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !$('#modal').hidden) closeModal();
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+      const tag = (e.target?.tagName || '').toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea' && Undo.stack.length) {
+        e.preventDefault();
+        Undo.pop();
+      }
+    }
+  });
   $('#importFile').addEventListener('change', e => { handleImport(e.target.files[0]); e.target.value = ''; });
   window.addEventListener('hashchange', () => go(location.hash.slice(1)));
   if (darkQuery) {
@@ -4087,12 +5066,23 @@ function init() {
   const saved = Store.load();
   if (saved) {
     state = normalizeState(saved);
+    Store.saveLocal();
   } else {
     state = createDefaultState();
     generateSampleData();
     state.updatedAt = null;
     state._dirty = false;
     Store.saveLocal();
+    // Jika LocalStorage sempat terhapus oleh browser tetapi IndexedDB masih menyimpan backup, pulihkan otomatis
+    IDBStore.load(STORAGE_KEY).then(idbData => {
+      if (idbData && typeof idbData === 'object' && idbData.updatedAt) {
+        state = normalizeState(idbData);
+        QueryCache.invalidateAll();
+        Store.saveLocal();
+        renderCurrent();
+        toast('💾 Data dipulihkan otomatis dari cadangan IndexedDB', 'ok');
+      }
+    });
   }
 
   // Dukungan parameter URL ?key=... dari QR Code agar otomatis menyamakan Kunci Sinkronisasi di HP

@@ -1,5 +1,5 @@
 /* OtotKu - Service Worker for Offline & PWA Support (v4 - Crimson & Obsidian Edition) */
-const CACHE_NAME = 'ototku-cache-v5';
+const CACHE_NAME = 'ototku-cache-v6';
 const CORE_ASSETS = [
   './',
   './index.html',
